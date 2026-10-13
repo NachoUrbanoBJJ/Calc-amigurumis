@@ -81,30 +81,58 @@
         <label for="cantidadUtilizada">Cantidad Usada</label>
         <input id="cantidadUtilizada" type="number">
 
-        <button onclick="agregarComponentes()">
+        <button type="button" id="btnAgregarComponente">
             Agregar Componente
         </button>
         </div>
+
+        <div id="listaComponentes"></div>
     </div>
 
     <div class="manoObra">
         <h2>Mano de Obra</h2>
 
         <label for="horasTrabajadas">Horas Trabajadas</label>
-        <input id="horasTrabajadas" type="number">
+        <input id="horasTrabajadas" type="number" step="0.1" min="0">
 
         <label for="valorHoras">Valor por Hora</label>
-        <input id="valorHoras" type="number">
-
-        <button onclick="valorTrabajo()">Probar</button>
+        <input id="valorHoras" type="number" step="0.01" min="0">
 
     </div>
 
+    <div class="acciones">
+        <button type="button" id="btnCalcular">Calcular</button>
+        <button type="button" id="btnLimpiar">Limpiar</button>
+    </div>
 
+    <div class="resultados" id="resultados" style="display:none;">
+        <h2>Resultados</h2>
 
+        <div class="resultado-item">
+            <span>Costo de Lanas:</span>
+            <span id="resLanas">€ 0,00</span>
+        </div>
+        <div class="resultado-item">
+            <span>Costo de Relleno:</span>
+            <span id="resRelleno">€ 0,00</span>
+        </div>
+        <div class="resultado-item">
+            <span>Costo de Componentes:</span>
+            <span id="resComponentes">€ 0,00</span>
+        </div>
+        <div class="resultado-item">
+            <span>Mano de Obra:</span>
+            <span id="resManoObra">€ 0,00</span>
+        </div>
+        <div class="resultado-item total">
+            <span>Total General:</span>
+            <span id="resTotal">€ 0,00</span>
+        </div>
 
+        <h3>Desglose de Componentes</h3>
+        <div id="desgloseComponentes"></div>
+    </div>
 
-
-    <script src="js/scripts.js"></script>
+    <script type="module" src="js/scripts.js"></script>
 </body>
 </html>

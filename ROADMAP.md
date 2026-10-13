@@ -12,16 +12,17 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ `README.md` con instrucciones
 - ✅ `ROADMAP.md`
 - ✅ Repositorio remoto en **GitHub** (`NachoUrbanoBJJ/Calc-amigurumis`, rama `main`)
-- ⬜ Separar el JS en módulos por sección (se hará junto al Bloque 1)
+- ✅ Separar el JS en módulos por sección
 
-## Bloque 1 — Lógica de la calculadora 🔴 prioridad
+## Bloque 1 — Lógica de la calculadora 🔴 prioridad ✅
 - ✅ Captura de Lanas, Relleno, Componentes, Mano de Obra
-- ✅ Cálculo de costo de lana, relleno y mano de obra (en consola)
-- ⬜ Mostrar los resultados en pantalla
-- ⬜ Total general del amigurumi
-- ⬜ Lista visible de componentes agregados
-- ⬜ Botón "Calcular" único o cálculo en vivo
-- ⬜ Validaciones (campos vacíos, negativos, división por cero)
+- ✅ Cálculo de costo de lana, relleno y mano de obra
+- ✅ Mostrar los resultados en pantalla
+- ✅ Total general del amigurumi
+- ✅ Lista visible de componentes agregados
+- ✅ Botón "Calcular" único
+- ✅ Validaciones (campos vacíos, negativos, división por cero)
+- ✅ Separar el JS en módulos por sección
 
 ## Bloque 2 — Funciones de la app (features)
 - ⬜ Precio de venta final + margen de ganancia (%)
@@ -30,12 +31,19 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ⬜ Categorías de componentes editables por el usuario
 - ⬜ Duplicar un proyecto
 - ⬜ Notas por proyecto
+- ⬜ **Gestor de patrones de costura / amigurumi**
+- ⬜ **Inventario de materiales (lanas, relleno, componentes)**
+- ⬜ **Planificador de trabajos (asociar proyecto a materiales)**
+- ⬜ **Descontar stock al planificar/guardar un trabajo**
+- ⬜ **Alertas de stock bajo / sin stock**
 - ⬜ Futuro: exportar a PDF / imagen / Excel
 
 ## Bloque 3 — Datos y persistencia
 - ⬜ Guardar en el dispositivo (localStorage)
 - ⬜ Datos por defecto (categorías, valores)
 - ⬜ Exportar/Importar backup (JSON)
+- ⬜ **Base de datos local unificada (proyectos + inventario + patrones)**
+- ⬜ **Sincronización de stock entre proyectos e inventario**
 - ⬜ Futuro: sincronización en la nube
 
 ## Bloque 4 — Diseño y experiencia (UI/UX)
@@ -78,13 +86,14 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ⬜ Compartir cálculos por WhatsApp
 - ⬜ Lista de precios de lanas/insumos
 - ⬜ Estadísticas (ganancias del mes, etc.)
+- ⬜ **Recomendaciones automáticas por stock disponible**
 
 ---
 
 ## Orden sugerido de ejecución
 
 ```
-Bloque 0 → Bloque 1 → Bloque 4 (responsive) → Bloque 3 → Bloque 5 → Bloque 6 → Bloque 2 (extras) → Bloque 7
+Bloque 0 → Bloque 1 → Bloque 4 (responsive) → Bloque 3 → Bloque 5 → Bloque 6 → Bloque 2 (extras + Inventario + Patrones) → Bloque 7
 ```
 
 Primero que funcione (0–1), después que se vea bien (4), que no pierda datos (3),

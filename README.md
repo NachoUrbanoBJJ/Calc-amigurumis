@@ -1,56 +1,63 @@
-# 🧶 Calculadora de Amigurumis
+# Calculadora de Amigurumis
 
-Aplicación para calcular el costo real de un amigurumi: lana, relleno, componentes y mano de obra.
+Calculadora de costos para amigurumis (lana, relleno, componentes y mano de obra).
 
-El objetivo final es tener una app usable en **PC y Android** (PWA + Capacitor) a partir de un
-único código web.
+## Características
 
-## Estado
-
-En desarrollo. Fase actual: **Bloque 0 — Orden del proyecto** (ver [`ROADMAP.md`](./ROADMAP.md)).
+- Cálculo de costo de lanas (precio por gramo usado)
+- Cálculo de costo de relleno (precio por gramo usado)
+- Gestión de componentes con desglose de costo
+- Cálculo de mano de obra
+- Total general automático
+- Validaciones de entrada
+- Responsive (mobile-first)
+- Módulos ES6 organizados
 
 ## Estructura del proyecto
 
 ```
-Calcuadora/
-├─ index.html        # Estructura de la interfaz
-├─ css/
-│  └─ styles.css     # Estilos
-├─ js/
-│  └─ scripts.js     # Lógica de la calculadora
-├─ assets/           # Íconos e imágenes (se agregan en el Bloque 5)
-├─ package.json      # Dependencias y scripts (Vite)
-├─ ROADMAP.md        # Hoja de ruta por bloques
-└─ README.md
+Calc-amigurumis/
+├── css/
+│   └── styles.css
+├── js/
+│   ├── calculos.js      # Lógica pura de cálculos
+│   ├── ui.js            # Funciones de interfaz
+│   ├── scripts.js       # Lógica principal
+│   ├── inventario.js    # Gestión de inventario (próximas funcionalidades)
+│   ├── patrones.js      # Gestión de patrones (próximas funcionalidades)
+│   └── proyectos.js     # Gestión de proyectos (próximas funcionalidades)
+├── index.html
+├── package.json
+├── ROADMAP.md
+└── vite.config.js (opcional)
 ```
 
-## Requisitos
-
-- **Navegador** (para la versión simple): solo abrir `index.html`.
-- **Node.js 18+** (para el servidor de desarrollo con Vite y para Capacitor más adelante).
-  Descarga: https://nodejs.org
-- **Git** para el control de versiones.
-
-## Cómo usarla
-
-### Opción 1 — Sin instalar nada
-Abrir `index.html` en el navegador (doble clic). Funciona de forma básica.
-
-### Opción 2 — Servidor de desarrollo (recomendado)
-Requiere Node.js instalado.
+## Instalación y uso
 
 ```bash
-npm install    # solo la primera vez
-npm run dev    # abre un servidor local con recarga automática
-```
+# Instalar dependencias
+npm install
 
-Para generar la versión de producción:
+# Desarrollo
+npm run dev
 
-```bash
+# Build para producción
 npm run build
+
+# Preview
+npm run preview
 ```
 
-## Hoja de ruta
+## Estado actual
 
-El plan completo, dividido en bloques que se pueden ampliar con el tiempo, está en
-[`ROADMAP.md`](./ROADMAP.md).
+- ✅ Bloque 0: Estructura base, Git, Vite, README, ROADMAP
+- ✅ Bloque 1: Lógica completa con resultados, validaciones y módulos
+- 🔄 Bloque 4: Responsive (parcialmente implementado)
+
+## Próximos pasos
+
+Según el ROADMAP:
+1. Mejorar UI/UX (Bloque 4 completo)
+2. Persistencia localStorage (Bloque 3)
+3. PWA + Capacitor para Android (Bloques 5-6)
+4. Inventario, Patrones, Planificador de trabajos (Bloque 2)

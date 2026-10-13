@@ -3,7 +3,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 40px;
+    padding: 20px;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 h1 {
@@ -13,23 +13,30 @@ h1 {
 h2 {
     text-align: center;
     color: #444;
+    margin-top: 0;
+}
+h3 {
+    color: #444;
+    margin-top: 20px;
 }
 input {
     width: 100%;
     flex: 1;
     padding: 10px;
-    margin: 5px;
+    margin: 5px 0;
     border-radius: 8px;
     border: 1px solid #ddd;
     box-sizing: border-box;
+    font-family: inherit;
 }
 input, select {
     width: 100%;
     padding: 10px;
-    margin: 5px;
+    margin: 5px 0;
     border-radius: 8px;
     border: 1px solid #ddd;
     box-sizing: border-box;
+    font-family: inherit;
 }
 label {
     display: block;
@@ -38,9 +45,28 @@ label {
     font-weight: bold;
     font-family: 'Courier New', Courier, monospace;
 }
+button {
+    background-color: #ff5c8a;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: bold;
+    margin: 5px;
+    transition: background-color 0.2s ease;
+}
+button:hover {
+    background-color: #ff3d75;
+}
+button:active {
+    background-color: #e62e64;
+}
 .lanas {
     background-color: white;
-    width: 1200px;
+    max-width: 1000px;
+    width: 95%;
     margin-top: 15px;
     margin-bottom: 15px;
     padding: 20px;
@@ -51,13 +77,27 @@ label {
     display: flex;
     gap: 10px;
     margin-bottom: 15px;
+    flex-wrap: wrap;
 }
-.info > div {
+.info > div,
+.info > input {
     flex: 1;
+    min-width: 200px;
+}
+.calculo {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.calculo > div,
+.calculo > input {
+    flex: 1;
+    min-width: 200px;
 }
 .relleno {
     background-color: white;
-    width: 1200px;
+    max-width: 1000px;
+    width: 95%;
     margin-top: 15px;
     margin-bottom: 15px;
     padding: 20px;
@@ -66,7 +106,8 @@ label {
 }
 .componentes {
     background-color: white;
-    width: 1200px;
+    max-width: 1000px;
+    width: 95%;
     margin-top: 15px;
     margin-bottom: 15px;
     padding: 20px;
@@ -78,11 +119,84 @@ label {
 }
 .manoObra {
     background-color: white;
-    width: 1200px;
+    max-width: 1000px;
+    width: 95%;
     margin-top: 15px;
     margin-bottom: 15px;
     padding: 20px;
     border-radius: 15px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+.acciones {
+    max-width: 1000px;
+    width: 95%;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.resultados {
+    background-color: white;
+    max-width: 1000px;
+    width: 95%;
+    margin-top: 15px;
+    margin-bottom: 30px;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+.resultado-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 16px;
+}
+.resultado-item.total {
+    font-weight: bold;
+    font-size: 18px;
+    color: #ff5c8a;
+    border-bottom: 2px solid #ff5c8a;
+    margin-top: 10px;
+    padding-top: 12px;
+}
+#listaComponentes {
+    margin-top: 15px;
+}
+.componente-item {
+    background-color: #f9f9f9;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    border-left: 4px solid #ff5c8a;
+}
+.componente-item .comp-header {
+    font-weight: bold;
+    color: #444;
+}
+.componente-item .comp-details {
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+}
+.error {
+    color: #d32f2f;
+    font-size: 14px;
+    margin-top: 5px;
+}
+@media (max-width: 600px) {
+    .info {
+        flex-direction: column;
+        gap: 0;
+    }
+    .calculo {
+        flex-direction: column;
+        gap: 0;
+    }
+    body {
+        padding: 10px;
+    }
 }
 
