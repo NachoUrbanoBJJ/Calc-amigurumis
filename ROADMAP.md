@@ -11,7 +11,7 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ **`package.json`** + **Vite** (preparado)
 - ✅ `README.md` con instrucciones
 - ✅ `ROADMAP.md`
-- ⏳ Repositorio remoto en **GitHub** (ejecutar `push`)
+- ✅ Repositorio remoto en **GitHub** (`NachoUrbanoBJJ/Calc-amigurumis`, rama `main`)
 - ⬜ Separar el JS en módulos por sección (se hará junto al Bloque 1)
 
 ## Bloque 1 — Lógica de la calculadora 🔴 prioridad
