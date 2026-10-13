@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Amigurumis</title>
+</head>
+<body>
+    <div class="lanas">
+
+        <h2>Lanas</h2>
+
+    <div class="info">
+        <label for="colorLana">Color</label>
+        <input id="colorLana" type="text">
+
+        <label for="marcaLana">Marca de Lana</label>
+        <input id="marcaLana" type="text">
+</div>
+
+    <div class="calculo">
+        <label for="precioOvillo">Precio del Ovillo</label>
+        <input id="precioOvillo" type="number">
+
+        <label for="gramosOvillo">Gramos del Ovillo</label>
+        <input id="gramosOvillo" type="number">
+
+        <label for="gramosUsados">Gramos Usados</label>
+        <input id="gramosUsados" type="number">
+    </div>
+</div>
+
+    <div class="relleno">
+        <h2>Relleno</h2>
+
+        <div class="info">
+            <label for="tipoRelleno">Tipo de Relleno</label>
+            <input id="tipoRelleno" type="text">
+
+            <label for="marcaRelleno">Marca</label>
+            <input id="marcaRelleno" type="text">
+        </div>
+
+        <div class="calculo">
+            <label for="precioRelleno">Precio del Relleno</label>
+            <input id="precioRelleno" type="number">
+
+            <label for="gramosRelleno">Gramos totales</label>
+            <input id="gramosRelleno" type="number">
+
+            <label for="rellenoUsado">Relleno Usado</label>
+            <input id="rellenoUsado" type="number">
+
+        </div>
+    </div>
+
+    <div class="componentes">
+
+        <h2>Componentes</h2>
+
+        <label for="tipoComponente">Componentes</label>
+
+        <select id="tipoComponente">
+            <option value="">Seleccionar...</option>
+            <option value="ojos">Ojos</option>
+            <option value="piedras">Piedras</option>
+            <option value="cinta">Cinta</option>
+            <option value="botones">Botones</option>
+            <option value="llavero">Llavero</option>
+        </select>
+
+        <div id="datosComponentes">
+
+        <label for="cantidadComprada">Cantidad Comprada</label>
+        <input id="cantidadComprada" type="number">
+
+        <label for="precioCompra">Precio de Compra</label>
+        <input id="precioCompra" type="number">
+
+        <label for="cantidadUtilizada">Cantidad Usada</label>
+        <input id="cantidadUtilizada" type="number">
+
+        <button onclick="agregarComponentes()">
+            Agregar Componente
+        </button>
+        </div>
+    </div>
+
+    <div class="manoObra">
+        <h2>Mano de Obra</h2>
+
+        <label for="horasTrabajadas">Horas Trabajadas</label>
+        <input id="horasTrabajadas" type="number">
+
+        <label for="valorHoras">Valor por Hora</label>
+        <input id="valorHoras" type="number">
+
+        <button onclick="valorTrabajo()">Probar</button>
+
+    </div>
+
+
+
+
+
+
+    <script src="js/scripts.js"></script>
+</body>
+</html>
