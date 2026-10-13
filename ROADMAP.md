@@ -24,18 +24,21 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ Validaciones (campos vacíos, negativos, división por cero)
 - ✅ Separar el JS en módulos por sección
 
-## Bloque 2 — Funciones de la app (features)
+## Bloque 2 — Funciones de la app (features) 🔄
 - ⬜ Precio de venta final + margen de ganancia (%)
-- ⬜ Guardar varias recetas/proyectos
-- ⬜ Historial de amigurumis calculados
+- ✅ Guardar varias recetas/proyectos
+- ✅ Historial de amigurumis calculados
 - ⬜ Categorías de componentes editables por el usuario
 - ⬜ Duplicar un proyecto
-- ⬜ Notas por proyecto
-- ⬜ **Gestor de patrones de costura / amigurumi**
-- ⬜ **Inventario de materiales (lanas, relleno, componentes)**
-- ⬜ **Planificador de trabajos (asociar proyecto a materiales)**
+- ✅ Notas por proyecto
+- ✅ **Gestor de patrones de costura / amigurumi**
+- ✅ **Inventario de materiales (lanas, relleno, componentes)**
+- ✅ **Planificador de trabajos (crear proyecto + secciones: puntos/vueltas/altura/notas)**
 - ⬜ **Descontar stock al planificar/guardar un trabajo**
 - ⬜ **Alertas de stock bajo / sin stock**
+- ✅ **Menú de navegación (Calculadora / Inventario / Guardado)**
+- ✅ **Exportar/Importar Backup JSON (global)**
+- ✅ **Exportar/Importar Inventario JSON**
 - ⬜ Futuro: exportar a PDF / imagen / Excel
 
 ## Bloque 3 — Datos y persistencia
@@ -48,11 +51,11 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 
 ## Bloque 4 — Diseño y experiencia (UI/UX)
 - ✅ Paleta rosa/blanco y tarjetas
-- ⬜ Responsive real (hoy usa 1200px fijo)
-- ⬜ Diseño mobile-first
+- ✅ Responsive real (tarjetas con max-width + flex/grid)
+- ✅ Diseño mobile-first (media queries añadidas)
 - ⬜ Ajustes de tipografía y espaciado
-- ⬜ Feedback visual (errores, confirmaciones, animaciones)
-- ⬜ Botones/inputs cómodos para uso táctil
+- ⬜ Feedback visual (errores inline, confirmaciones mejoradas, animaciones)
+- ✅ Botones/inputs cómodos para uso táctil
 - ⬜ Futuro: modo oscuro
 
 ## Bloque 5 — PWA (PC + Android desde navegador)
