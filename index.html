@@ -7,6 +7,17 @@
     <title>Calculadora de Amigurumis</title>
 </head>
 <body>
+    <header class="header">
+        <h1>Calculadora de Amigurumis</h1>
+        <nav class="nav">
+            <button class="nav-btn active" data-section="calculadora">Calculadora</button>
+            <button class="nav-btn" data-section="inventario">Inventario</button>
+            <button class="nav-btn" data-section="guardado">Guardado</button>
+        </nav>
+    </header>
+
+    <main>
+    <section id="section-calculadora" class="section active">
     <div class="lanas">
 
         <h2>Lanas</h2>
@@ -21,13 +32,13 @@
 
     <div class="calculo">
         <label for="precioOvillo">Precio del Ovillo</label>
-        <input id="precioOvillo" type="number">
+        <input id="precioOvillo" type="number" step="0.01">
 
         <label for="gramosOvillo">Gramos del Ovillo</label>
-        <input id="gramosOvillo" type="number">
+        <input id="gramosOvillo" type="number" step="0.01">
 
         <label for="gramosUsados">Gramos Usados</label>
-        <input id="gramosUsados" type="number">
+        <input id="gramosUsados" type="number" step="0.01">
     </div>
 </div>
 
@@ -131,7 +142,277 @@
 
         <h3>Desglose de Componentes</h3>
         <div id="desgloseComponentes"></div>
+
+        <div class="guardar-proyecto-calculadora">
+            <h3>Guardar como Proyecto</h3>
+            <div class="form-group">
+                <label for="nombreProyectoCalc">Nombre del Proyecto</label>
+                <input type="text" id="nombreProyectoCalc" placeholder="Ej: Osito, Toji Fushiguro...">
+            </div>
+            <div class="acciones-small">
+                <button type="button" id="btnGuardarDesdeCalculadora">Guardar Proyecto</button>
+            </div>
+            <small class="info-text">Se guardará el coste y los materiales usados para descontar stock después.</small>
+        </div>
     </div>
+    </section>
+
+    <!-- SECCIÓN INVENTARIO -->
+    <section id="section-inventario" class="section">
+        <div class="card">
+            <h2>Inventario</h2>
+            <p class="subtitulo">Gestiona el stock disponible de lanas, relleno y componentes.</p>
+        </div>
+
+        <!-- Lanas en Inventario -->
+        <div class="card">
+            <h3>Añadir Lanas al Inventario</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="invColorLana">Color</label>
+                    <input type="text" id="invColorLana" placeholder="Ej: Gris oscuro">
+                </div>
+                <div class="form-group">
+                    <label for="invMarcaLana">Marca</label>
+                    <input type="text" id="invMarcaLana" placeholder="Ej: Drops">
+                </div>
+                <div class="form-group">
+                    <label for="invPrecioOvillo">Precio del Ovillo (€)</label>
+                    <input type="number" id="invPrecioOvillo" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="invGramosOvillo">Gramos por Ovillo (g)</label>
+                    <input type="number" id="invGramosOvillo" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="invGramosDisponibles">Gramos Disponibles (g)</label>
+                    <input type="number" id="invGramosDisponibles" step="0.01" min="0">
+                </div>
+            </div>
+            <div class="acciones-small">
+                <button type="button" id="btnAgregarLanaInv">Añadir a Inventario</button>
+            </div>
+            <h3>Stock de Lanas</h3>
+            <div id="listaLanasInv" class="lista-items"></div>
+        </div>
+
+        <!-- Relleno en Inventario -->
+        <div class="card">
+            <h3>Añadir Relleno al Inventario</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="invTipoRelleno">Tipo de Relleno</label>
+                    <input type="text" id="invTipoRelleno" placeholder="Ej: Fibra sintética">
+                </div>
+                <div class="form-group">
+                    <label for="invMarcaRelleno">Marca</label>
+                    <input type="text" id="invMarcaRelleno" placeholder="Ej: HobbyFill">
+                </div>
+                <div class="form-group">
+                    <label for="invPrecioRelleno">Precio (€)</label>
+                    <input type="number" id="invPrecioRelleno" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="invGramosRellenoTot">Gramos Totales (g)</label>
+                    <input type="number" id="invGramosRellenoTot" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="invGramosRellenoDisp">Gramos Disponibles (g)</label>
+                    <input type="number" id="invGramosRellenoDisp" step="0.01" min="0">
+                </div>
+            </div>
+            <div class="acciones-small">
+                <button type="button" id="btnAgregarRellenoInv">Añadir a Inventario</button>
+            </div>
+            <h3>Stock de Relleno</h3>
+            <div id="listaRellenosInv" class="lista-items"></div>
+        </div>
+
+        <!-- Componentes en Inventario -->
+        <div class="card">
+            <h3>Añadir Componentes al Inventario</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="invTipoComp">Tipo de Componente</label>
+                    <input type="text" id="invTipoComp" placeholder="Ej: Ojos de seguridad 12mm">
+                </div>
+                <div class="form-group">
+                    <label for="invCantCompradaComp">Cantidad Comprada (ud.)</label>
+                    <input type="number" id="invCantCompradaComp" min="0" step="1">
+                </div>
+                <div class="form-group">
+                    <label for="invPrecioCompraComp">Precio de Compra (€)</label>
+                    <input type="number" id="invPrecioCompraComp" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="invCantDispComp">Cantidad Disponible (ud.)</label>
+                    <input type="number" id="invCantDispComp" min="0" step="1">
+                </div>
+            </div>
+            <div class="acciones-small">
+                <button type="button" id="btnAgregarCompInv">Añadir a Inventario</button>
+            </div>
+            <h3>Stock de Componentes</h3>
+            <div id="listaComponentesInv" class="lista-items"></div>
+        </div>
+
+        <div class="card">
+            <div class="acciones-small">
+                <button type="button" id="btnVaciarInventario" class="btn-secundario">Vaciar Inventario</button>
+                <button type="button" id="btnExportarInventario" class="btn-secundario">Exportar JSON</button>
+                <label for="inputImportarInventario" class="btn-secundario file-label">Importar JSON</label>
+                <input type="file" id="inputImportarInventario" accept="application/json" style="display:none;">
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCIÓN PLANIFICADOR / GUARDADO -->
+    <section id="section-guardado" class="section">
+        <div class="card">
+            <h2>Planificador de Trabajos</h2>
+            <p class="subtitulo">Crea proyectos (amigurumis o prendas de ropa), guarda puntos por secciones y planifica tus trabajos.</p>
+        </div>
+
+        <!-- Crear Proyecto -->
+        <div class="card">
+            <h3>Crear Nuevo Proyecto</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="planNombreProyecto">Nombre del Proyecto</label>
+                    <input type="text" id="planNombreProyecto" placeholder="Ej: Toji Fushiguro, Jersey de bebé...">
+                </div>
+                <div class="form-group">
+                    <label for="planTipoProyecto">Tipo de Proyecto</label>
+                    <select id="planTipoProyecto">
+                        <option value="amigurumi">Amigurumi</option>
+                        <option value="prenda">Prenda de Ropa</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label for="planNotasProyecto">Notas Generales</label>
+                    <textarea id="planNotasProyecto" rows="3" placeholder="Notas, referencias, patrón, etc..."></textarea>
+                </div>
+            </div>
+            <div class="acciones-small">
+                <button type="button" id="btnCrearProyecto">Crear Proyecto</button>
+            </div>
+        </div>
+
+        <!-- Editor de Secciones del Proyecto Activo -->
+        <div class="card" id="editorProyecto" style="display:none;">
+            <h3>Proyecto Activo: <span id="nombreProyectoActivo"></span></h3>
+            <div class="proyecto-info">
+                <span class="badge" id="tipoProyectoActivo"></span>
+                <button type="button" id="btnCerrarProyectoActivo" class="btn-link">Cerrar Editor</button>
+            </div>
+
+            <h3>Añadir Sección</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="planNombreSeccion">Nombre de la Sección</label>
+                    <input type="text" id="planNombreSeccion" list="sugerenciasSecciones" placeholder="Ej: Cabeza, Torso, Brazos, Piernas...">
+                    <datalist id="sugerenciasSecciones">
+                        <option value="Cabeza">
+                        <option value="Cuello">
+                        <option value="Torso">
+                        <option value="Cuerpo">
+                        <option value="Tronco">
+                        <option value="Brazo Derecho">
+                        <option value="Brazo Izquierdo">
+                        <option value="Brazos">
+                        <option value="Pierna Derecha">
+                        <option value="Pierna Izquierda">
+                        <option value="Piernas">
+                        <option value="Orejas">
+                        <option value="Hocico">
+                        <option value="Cola">
+                        <option value="Cabello">
+                        <option value="Delantero">
+                        <option value="Espalda">
+                        <option value="Mangas">
+                        <option value="Puños">
+                        <option value="Cintura">
+                        <option value="Botones">
+                        <option value="Detalles">
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label for="planPuntosSeccion">Puntos</label>
+                    <input type="number" id="planPuntosSeccion" min="0" step="1" placeholder="Ej: 6, 12, 24...">
+                </div>
+                <div class="form-group">
+                    <label for="planVueltasSeccion">Vueltas / Filas</label>
+                    <input type="number" id="planVueltasSeccion" min="0" step="1" placeholder="Ej: 10, 20...">
+                </div>
+                <div class="form-group">
+                    <label for="planAlturaSeccion">Altura (cm)</label>
+                    <input type="number" id="planAlturaSeccion" min="0" step="0.1" placeholder="Ej: 5.5">
+                </div>
+                <div class="form-group full-width">
+                    <label for="planNotasSeccion">Notas de la Sección</label>
+                    <textarea id="planNotasSeccion" rows="2" placeholder="Aumentos, disminuciones, cambios de color..."></textarea>
+                </div>
+            </div>
+            <div class="acciones-small">
+                <button type="button" id="btnAgregarSeccion">Añadir Sección</button>
+            </div>
+
+            <h3>Secciones del Proyecto</h3>
+            <div id="listaSeccionesProyecto" class="lista-secciones"></div>
+
+            <div class="acciones">
+                <button type="button" id="btnGuardarProyectoCompleto">Guardar Proyecto Completo</button>
+                <button type="button" id="btnDescartarProyectoActivo" class="btn-secundario">Descartar Cambios</button>
+            </div>
+        </div>
+
+        <!-- Listado de Proyectos Guardados -->
+        <div class="card">
+            <h3>Proyectos Guardados</h3>
+            <div id="listaProyectosGuardados" class="lista-items"></div>
+            <div class="acciones-small" id="accionesProyectosVacios" style="display:none;">
+                <p class="info-text">Aún no tienes proyectos guardados.</p>
+            </div>
+        </div>
+
+        <!-- Patrones Guardados -->
+        <div class="card">
+            <h3>Patrones Guardados</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="patronNombre">Nombre del Patrón</label>
+                    <input type="text" id="patronNombre" placeholder="Ej: Patrón básico osito">
+                </div>
+                <div class="form-group">
+                    <label for="patronCategoria">Categoría</label>
+                    <input type="text" id="patronCategoria" placeholder="Ej: Amigurumi, Prenda">
+                </div>
+                <div class="form-group full-width">
+                    <label for="patronMateriales">Materiales Necesarios</label>
+                    <textarea id="patronMateriales" rows="2" placeholder="Lana, relleno, ojos, aguja..."></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label for="patronInstrucciones">Instrucciones / Notas</label>
+                    <textarea id="patronInstrucciones" rows="4" placeholder="Instrucciones paso a paso, abreviaturas, etc..."></textarea>
+                </div>
+            </div>
+            <div class="acciones-small">
+                <button type="button" id="btnGuardarPatron">Guardar Patrón</button>
+            </div>
+            <h3>Lista de Patrones</h3>
+            <div id="listaPatrones" class="lista-items"></div>
+        </div>
+
+        <div class="card">
+            <div class="acciones-small">
+                <button type="button" id="btnExportarTodo" class="btn-secundario">Exportar Todo (Backup JSON)</button>
+                <label for="inputImportarTodo" class="btn-secundario file-label">Importar Backup JSON</label>
+                <input type="file" id="inputImportarTodo" accept="application/json" style="display:none;">
+            </div>
+        </div>
+    </section>
+    </main>
 
     <script type="module" src="js/scripts.js"></script>
 </body>
