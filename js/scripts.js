@@ -10,6 +10,8 @@ import {
     cargarPatrones,
     guardarPatrones,
     agregarPatron,
+    generarCodigoPatron,
+    normalizarPatrones,
     eliminarPatron
 } from "./planificador.js";
 import {
@@ -32,6 +34,10 @@ let proyectoActivo = null;              // proyecto abierto en el editor de secc
 let proyectoSeleccionadoId = null;      // proyecto que recibirá el cálculo de la calculadora
 let proyectoRevisadoId = null;          // proyecto expandido (revisar) en la lista
 let patrones = cargarPatrones();
+let patronBusqueda = "";                // texto del buscador de patrones
+let patronCategoriaFiltro = "";         // categoría activa ("" = todas)
+let patronRevisadoId = null;            // patrón expandido (ver) en la lista
+let patronEditandoId = null;            // patrón en edición (null = alta nueva)
 let inventario = cargarInventario();
 
 // ---------------------------------------------------------------------------
@@ -744,13 +750,96 @@ if (btnGuardarPatron) {
         };
         if (!datos.nombre) { alert("Escribe un nombre para el patrón"); return; }
 
-        patrones.push(agregarPatron(datos));
+        if (patronEditandoId) {
+            const patron = patrones.find((p) => p.id === patronEditandoId);
+            if (patron) {
+                patron.nombre = datos.nombre;
+                patron.categoria = datos.categoria;
+                patron.materiales = datos.materiales;
+                patron.instrucciones = datos.instrucciones;
+                patron.fechaModificacion = new Date().toISOString();
+            }
+        } else {
+            patrones.push(agregarPatron(datos, generarCodigoPatron(patrones)));
+        }
+
         guardarPatrones(patrones);
+        limpiarFormPatron();
         renderPatrones();
-        ["patronNombre", "patronCategoria", "patronMateriales", "patronInstrucciones"].forEach((id) => {
-            document.getElementById(id).value = "";
-        });
     });
+}
+
+const btnCancelarEdicionPatron = document.getElementById("btnCancelarEdicionPatron");
+if (btnCancelarEdicionPatron) {
+    btnCancelarEdicionPatron.addEventListener("click", () => limpiarFormPatron());
+}
+
+const patronBuscador = document.getElementById("patronBuscador");
+if (patronBuscador) {
+    patronBuscador.addEventListener("input", () => {
+        patronBusqueda = patronBuscador.value;
+        renderPatrones();
+    });
+}
+
+function limpiarFormPatron() {
+    limpiarCampos(["patronNombre", "patronCategoria", "patronMateriales", "patronInstrucciones"]);
+    patronEditandoId = null;
+
+    const btn = document.getElementById("btnGuardarPatron");
+    if (btn) btn.textContent = "Guardar Patrón";
+
+    const cancelar = document.getElementById("btnCancelarEdicionPatron");
+    if (cancelar) cancelar.style.display = "none";
+
+    const titulo = document.getElementById("tituloFormPatron");
+    if (titulo) titulo.textContent = "Nuevo Patrón";
+}
+
+function editarPatron(id) {
+    const p = patrones.find((x) => x.id === id);
+    if (!p) return;
+
+    patronEditandoId = id;
+    document.getElementById("patronNombre").value = p.nombre;
+    document.getElementById("patronCategoria").value = p.categoria;
+    document.getElementById("patronMateriales").value = p.materiales;
+    document.getElementById("patronInstrucciones").value = p.instrucciones;
+
+    const btn = document.getElementById("btnGuardarPatron");
+    if (btn) btn.textContent = "Guardar cambios";
+
+    const cancelar = document.getElementById("btnCancelarEdicionPatron");
+    if (cancelar) cancelar.style.display = "inline-block";
+
+    const titulo = document.getElementById("tituloFormPatron");
+    if (titulo) titulo.textContent = `Editando: ${p.nombre} (${p.codigo})`;
+
+    const nombre = document.getElementById("patronNombre");
+    if (nombre) nombre.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function duplicarPatron(id) {
+    const p = patrones.find((x) => x.id === id);
+    if (!p) return;
+
+    const copia = agregarPatron(
+        {
+            nombre: `${p.nombre} (copia)`,
+            categoria: p.categoria,
+            materiales: p.materiales,
+            instrucciones: p.instrucciones,
+        },
+        generarCodigoPatron(patrones)
+    );
+    patrones.push(copia);
+    guardarPatrones(patrones);
+    renderPatrones();
+}
+
+function toggleRevisarPatron(id) {
+    patronRevisadoId = patronRevisadoId === id ? null : id;
+    renderPatrones();
 }
 
 // ---------------------------------------------------------------------------
@@ -801,7 +890,7 @@ if (inputImportarTodo) {
                         componentes: Array.isArray(data.inventario.componentes) ? data.inventario.componentes : [],
                     };
                 }
-                if (Array.isArray(data.patrones)) patrones = data.patrones;
+                if (Array.isArray(data.patrones)) patrones = normalizarPatrones(data.patrones);
 
                 const proyectosImport =
                     data.proyectos ||
@@ -1009,30 +1098,133 @@ function renderProyectos() {
     lista.querySelectorAll("[data-eliminar]").forEach((b) => b.addEventListener("click", () => eliminarProyecto(b.dataset.eliminar)));
 }
 
+function renderCategoriasPatrones() {
+    const cont = document.getElementById("patronCategorias");
+    if (!cont) return;
+
+    const conteo = {};
+    patrones.forEach((p) => {
+        const cat = (p.categoria || "Sin categoría").trim() || "Sin categoría";
+        conteo[cat] = (conteo[cat] || 0) + 1;
+    });
+
+    // Si la categoría filtrada ya no existe, volvemos a "Todas".
+    if (patronCategoriaFiltro && !Object.prototype.hasOwnProperty.call(conteo, patronCategoriaFiltro)) {
+        patronCategoriaFiltro = "";
+    }
+
+    cont.innerHTML = "";
+
+    const crearChip = (etiqueta, valor, activo) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "chip" + (activo ? " active" : "");
+        chip.textContent = etiqueta;
+        chip.dataset.categoria = valor;
+        chip.addEventListener("click", () => {
+            patronCategoriaFiltro = valor;
+            renderPatrones();
+        });
+        cont.appendChild(chip);
+    };
+
+    crearChip(`Todas (${patrones.length})`, "", patronCategoriaFiltro === "");
+    Object.keys(conteo)
+        .sort((a, b) => a.localeCompare(b))
+        .forEach((cat) => crearChip(`${cat} (${conteo[cat]})`, cat, patronCategoriaFiltro === cat));
+}
+
+function renderDetallePatron(p) {
+    let html = `<div class="detalle-proyecto">`;
+    html += `<div class="item-details">
+        <span><strong>Código:</strong> ${escapeHtml(p.codigo)}</span>
+        <span><strong>Categoría:</strong> ${escapeHtml(p.categoria || "-")}</span>
+        <span><strong>Modificado:</strong> ${new Date(p.fechaModificacion).toLocaleString("es-AR")}</span>
+    </div>`;
+    html += `<h4>Materiales necesarios</h4><div class="seccion-notas">${escapeHtml(p.materiales || "Sin materiales")}</div>`;
+    html += `<h4>Instrucciones</h4><div class="seccion-notas">${escapeHtml(p.instrucciones || "Sin instrucciones")}</div>`;
+    html += `</div>`;
+    return html;
+}
+
 function renderPatrones() {
     const lista = document.getElementById("listaPatrones");
     if (!lista) return;
+
+    renderCategoriasPatrones();
     lista.innerHTML = "";
 
-    if (!patrones.length) {
-        lista.innerHTML = "<p class='empty-state'>Sin patrones guardados</p>";
+    const busqueda = normalizar(patronBusqueda);
+    const filtroCat = normalizar(patronCategoriaFiltro);
+
+    const filtrados = patrones.filter((p) => {
+        const cat = normalizar((p.categoria || "Sin categoría").trim() || "Sin categoría");
+        const coincideCat = !filtroCat || cat === filtroCat;
+        const coincideBusq =
+            !busqueda ||
+            normalizar(p.nombre).includes(busqueda) ||
+            normalizar(p.codigo).includes(busqueda);
+        return coincideCat && coincideBusq;
+    });
+
+    const resumen = document.getElementById("patronResumen");
+    if (resumen) {
+        resumen.textContent = patrones.length
+            ? `Mostrando ${filtrados.length} de ${patrones.length} patrones.`
+            : "Todavía no guardaste patrones.";
+    }
+
+    if (!filtrados.length) {
+        lista.innerHTML = "<p class='empty-state'>No hay patrones que coincidan con la búsqueda.</p>";
         return;
     }
 
-    patrones.forEach((p) => {
+    filtrados.forEach((p) => {
+        const abierto = patronRevisadoId === p.id;
         const div = document.createElement("div");
         div.className = "item-card";
-        div.innerHTML = `<div class="item-header"><span class="item-title">${escapeHtml(p.nombre)}</span><span class="item-badges"><span class="badge">${escapeHtml(p.categoria || "")}</span></span></div><div class="item-details"><span><strong>Materiales:</strong> ${escapeHtml(p.materiales || "")}</span></div>${p.instrucciones ? `<div class="seccion-notas"><strong>Instrucciones:</strong><br>${escapeHtml(p.instrucciones)}</div>` : ""}<div class="item-actions"><button class="btn-danger" data-del-patron="${p.id}">Eliminar</button></div>`;
+        div.innerHTML = `
+            <div class="item-header">
+                <span class="item-title">${escapeHtml(p.nombre)}</span>
+                <span class="item-badges">
+                    <span class="badge badge-codigo">${escapeHtml(p.codigo)}</span>
+                    <span class="badge">${escapeHtml(p.categoria || "Sin categoría")}</span>
+                </span>
+            </div>
+            <div class="item-details">
+                <span><strong>Materiales:</strong> ${escapeHtml((p.materiales || "-").slice(0, 80))}</span>
+            </div>
+            <div class="item-actions">
+                <button type="button" data-ver-patron="${p.id}">${abierto ? "Ocultar" : "Ver"}</button>
+                <button type="button" class="btn-secundario" data-edit-patron="${p.id}">Editar</button>
+                <button type="button" class="btn-info" data-dup-patron="${p.id}">Duplicar</button>
+                <button type="button" class="btn-danger" data-del-patron="${p.id}">Eliminar</button>
+            </div>
+            ${abierto ? renderDetallePatron(p) : ""}
+        `;
         lista.appendChild(div);
     });
 
-    lista.querySelectorAll("[data-del-patron]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-            if (confirm("¿Eliminar este patrón?")) {
-                eliminarPatron(patrones, btn.dataset.delPatron);
-                guardarPatrones(patrones);
-                renderPatrones();
-            }
+    lista.querySelectorAll("[data-ver-patron]").forEach((b) => {
+        b.addEventListener("click", () => toggleRevisarPatron(b.dataset.verPatron));
+    });
+    lista.querySelectorAll("[data-edit-patron]").forEach((b) => {
+        b.addEventListener("click", () => editarPatron(b.dataset.editPatron));
+    });
+    lista.querySelectorAll("[data-dup-patron]").forEach((b) => {
+        b.addEventListener("click", () => duplicarPatron(b.dataset.dupPatron));
+    });
+    lista.querySelectorAll("[data-del-patron]").forEach((b) => {
+        b.addEventListener("click", () => {
+            const p = patrones.find((x) => x.id === b.dataset.delPatron);
+            if (!p) return;
+            if (!confirm(`¿Eliminar el patrón "${p.nombre}" (${p.codigo})?`)) return;
+
+            eliminarPatron(patrones, p.id);
+            if (patronRevisadoId === p.id) patronRevisadoId = null;
+            if (patronEditandoId === p.id) limpiarFormPatron();
+            guardarPatrones(patrones);
+            renderPatrones();
         });
     });
 }

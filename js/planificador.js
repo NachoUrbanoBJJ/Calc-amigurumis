@@ -146,12 +146,77 @@ export function eliminarSeccion(proyecto, id) {
 // ---------------------------------------------------------------------------
 // Patrones
 // ---------------------------------------------------------------------------
+function codigoNumerico(patron) {
+    const m = /^PAT-(\d+)$/.exec((patron && patron.codigo) || "");
+    return m ? parseInt(m[1], 10) : 0;
+}
+
+/**
+ * Devuelve el próximo código legible disponible (PAT-0001, PAT-0002, ...).
+ */
+export function generarCodigoPatron(patrones) {
+    let max = 0;
+    (patrones || []).forEach((p) => {
+        max = Math.max(max, codigoNumerico(p));
+    });
+    return "PAT-" + String(max + 1).padStart(4, "0");
+}
+
+export function normalizarPatron(p) {
+    const base = p || {};
+    return {
+        id: base.id || generarId(),
+        codigo: base.codigo || "",
+        nombre: base.nombre || "Sin nombre",
+        categoria: base.categoria || "",
+        materiales: base.materiales || "",
+        instrucciones: base.instrucciones || "",
+        fecha: base.fecha || new Date().toISOString(),
+        fechaModificacion: base.fechaModificacion || base.fecha || new Date().toISOString(),
+    };
+}
+
+function asignarCodigosFaltantes(normalizados) {
+    let max = 0;
+    normalizados.forEach((p) => {
+        max = Math.max(max, codigoNumerico(p));
+    });
+    let huboAsignacion = false;
+    normalizados.forEach((p) => {
+        if (!/^PAT-\d+$/.test(p.codigo)) {
+            max += 1;
+            p.codigo = "PAT-" + String(max).padStart(4, "0");
+            huboAsignacion = true;
+        }
+    });
+    return huboAsignacion;
+}
+
+/**
+ * Normaliza una lista de patrones (de localStorage o de un backup) y les asigna código si falta.
+ */
+export function normalizarPatrones(lista) {
+    const normalizados = (Array.isArray(lista) ? lista : []).map(normalizarPatron);
+    asignarCodigosFaltantes(normalizados);
+    return normalizados;
+}
+
 export function cargarPatrones() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY_PATRONES);
         const data = raw ? JSON.parse(raw) : [];
-        return Array.isArray(data) ? data : [];
+        if (!Array.isArray(data)) return [];
+
+        const normalizados = data.map(normalizarPatron);
+
+        // Persistimos para que los códigos queden estables entre recargas.
+        if (asignarCodigosFaltantes(normalizados)) {
+            guardarPatrones(normalizados);
+        }
+
+        return normalizados;
     } catch (e) {
+        console.error("Error al cargar patrones", e);
         return [];
     }
 }
@@ -164,14 +229,17 @@ export function guardarPatrones(patrones) {
     }
 }
 
-export function agregarPatron(datos) {
+export function agregarPatron(datos, codigo) {
+    const ahora = new Date().toISOString();
     return {
         id: generarId(),
+        codigo: codigo || datos.codigo || "",
         nombre: datos.nombre || "Sin nombre",
         categoria: datos.categoria || "",
         materiales: datos.materiales || "",
         instrucciones: datos.instrucciones || "",
-        fecha: new Date().toISOString(),
+        fecha: ahora,
+        fechaModificacion: ahora,
     };
 }
 

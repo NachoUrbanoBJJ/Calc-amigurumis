@@ -387,7 +387,7 @@
     <!-- SECCIÓN PATRONES -->
     <section id="section-patrones" class="section">
         <div class="card">
-            <h3>Patrones Guardados</h3>
+            <h3 id="tituloFormPatron">Nuevo Patrón</h3>
             <div class="form-grid">
                 <div class="form-group">
                     <label for="patronNombre">Nombre del Patrón</label>
@@ -408,11 +408,17 @@
             </div>
             <div class="acciones-small">
                 <button type="button" id="btnGuardarPatron">Guardar Patrón</button>
+                <button type="button" id="btnCancelarEdicionPatron" class="btn-secundario" style="display:none;">Cancelar edición</button>
             </div>
-            <h3>Lista de Patrones</h3>
-            <div id="listaPatrones" class="lista-items"></div>
         </div>
 
+        <div class="card">
+            <h3>Mis Patrones</h3>
+            <input type="text" id="patronBuscador" placeholder="🔍 Buscar por nombre o código (ej: PAT-0001)...">
+            <div id="patronCategorias" class="chips"></div>
+            <p class="subtitulo" id="patronResumen"></p>
+            <div id="listaPatrones" class="lista-items"></div>
+        </div>
     </section>
 
     <!-- SECCIÓN BACKUP -->

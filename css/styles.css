@@ -557,6 +557,41 @@ textarea {
     font-size: 15px;
 }
 
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.chip {
+    width: auto;
+    margin: 0;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid #ffb8cd;
+    background-color: #ffe3ec;
+    color: #b23a5c;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.chip:hover {
+    background-color: #ffd0de;
+}
+
+.chip.active {
+    background-color: #ff5c8a;
+    color: #fff;
+    border-color: #ff5c8a;
+}
+
+.badge-codigo {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    font-family: 'Courier New', Courier, monospace;
+}
+
 @media (max-width: 600px) {
     .info {
         flex-direction: column;
