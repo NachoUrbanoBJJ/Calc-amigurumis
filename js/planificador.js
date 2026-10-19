@@ -11,7 +11,16 @@ export function generarId() {
 }
 
 export function costoVacio() {
-    return { lanas: 0, relleno: 0, componentes: 0, manoObra: 0, total: 0 };
+    return {
+        lanas: 0,
+        relleno: 0,
+        componentes: 0,
+        manoObra: 0,
+        total: 0,
+        precioVenta: 0,
+        ganancia: 0,
+        margen: 0,
+    };
 }
 
 function materialesVacios() {
@@ -39,12 +48,16 @@ export function normalizarProyecto(p) {
             componentes: Number(costo.componentes) || 0,
             manoObra: Number(costo.manoObra) || 0,
             total,
+            precioVenta: Number(costo.precioVenta) || 0,
+            ganancia: Number(costo.ganancia) || 0,
+            margen: Number(costo.margen) || 0,
         },
         materialesUsados: {
             lana: mat.lana || null,
             relleno: mat.relleno || null,
             componentes: Array.isArray(mat.componentes) ? mat.componentes : [],
         },
+        patronOrigen: base.patronOrigen || null,
         estado: base.estado || (total > 0 ? "terminado" : "planificando"),
         fechaCreacion: base.fechaCreacion || base.fecha || new Date().toISOString(),
         fechaModificacion: base.fechaModificacion || base.fecha || new Date().toISOString(),
@@ -113,6 +126,7 @@ export function crearProyecto(nombre, tipo, notas) {
         secciones: [],
         costo: costoVacio(),
         materialesUsados: materialesVacios(),
+        patronOrigen: null,
         estado: "planificando",
         fechaCreacion: ahora,
         fechaModificacion: ahora,
@@ -169,10 +183,21 @@ export function normalizarPatron(p) {
         codigo: base.codigo || "",
         nombre: base.nombre || "Sin nombre",
         categoria: base.categoria || "",
-        materiales: base.materiales || "",
+        materiales: Array.isArray(base.materiales) ? base.materiales.map(normalizarMaterial) : [],
+        materialesTexto: typeof base.materiales === "string" ? base.materiales : base.materialesTexto || "",
         instrucciones: base.instrucciones || "",
         fecha: base.fecha || new Date().toISOString(),
         fechaModificacion: base.fechaModificacion || base.fecha || new Date().toISOString(),
+    };
+}
+
+export function normalizarMaterial(m) {
+    const base = m || {};
+    return {
+        id: base.id || generarId(),
+        nombre: base.nombre || "",
+        cantidad: Number(base.cantidad) || 0,
+        unidad: base.unidad || "",
     };
 }
 
@@ -236,7 +261,8 @@ export function agregarPatron(datos, codigo) {
         codigo: codigo || datos.codigo || "",
         nombre: datos.nombre || "Sin nombre",
         categoria: datos.categoria || "",
-        materiales: datos.materiales || "",
+        materiales: Array.isArray(datos.materiales) ? datos.materiales.map(normalizarMaterial) : [],
+        materialesTexto: datos.materialesTexto || "",
         instrucciones: datos.instrucciones || "",
         fecha: ahora,
         fechaModificacion: ahora,

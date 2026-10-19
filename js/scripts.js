@@ -5,6 +5,7 @@ import {
     guardarProyectos,
     crearProyecto,
     normalizarProyecto,
+    generarId,
     agregarSeccion,
     eliminarSeccion,
     cargarPatrones,
@@ -38,7 +39,36 @@ let patronBusqueda = "";                // texto del buscador de patrones
 let patronCategoriaFiltro = "";         // categoría activa ("" = todas)
 let patronRevisadoId = null;            // patrón expandido (ver) en la lista
 let patronEditandoId = null;            // patrón en edición (null = alta nueva)
+let materialesForm = [];                // materiales que se están cargando en el formulario de patrón
 let inventario = cargarInventario();
+
+// ---------------------------------------------------------------------------
+// Configuración persistente (valores por defecto)
+// ---------------------------------------------------------------------------
+const STORAGE_KEY_CONFIG = "calc-amigurumis-config-v1";
+
+function cargarConfig() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY_CONFIG) || "{}") || {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function guardarConfig(config) {
+    try {
+        localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
+    } catch (e) {
+        console.warn("No se pudo guardar la configuración", e);
+    }
+}
+
+function aplicarValorHoraPorDefecto() {
+    const input = document.getElementById("valorHoras");
+    if (!input || input.value !== "") return;
+    const config = cargarConfig();
+    if (config.valorHora) input.value = String(config.valorHora);
+}
 
 // ---------------------------------------------------------------------------
 // Utilidades
@@ -151,6 +181,28 @@ function calcularCostoActual() {
     };
     costo.total = costo.lanas + costo.relleno + costo.componentes + costo.manoObra;
 
+    // Precio de venta y margen (el precio manual tiene prioridad sobre el margen)
+    const margenIngresado = valor("margenGanancia") !== "" ? num("margenGanancia") : null;
+    const precioManual = valor("precioVentaManual") !== "" ? num("precioVentaManual") : null;
+
+    let precioVenta = null;
+    if (precioManual !== null && precioManual > 0) {
+        precioVenta = precioManual;
+    } else if (margenIngresado !== null && margenIngresado >= 0) {
+        precioVenta = costo.total * (1 + margenIngresado / 100);
+    }
+
+    if (precioVenta !== null && precioVenta > 0) {
+        const ganancia = precioVenta - costo.total;
+        costo.precioVenta = Number(precioVenta.toFixed(2));
+        costo.ganancia = Number(ganancia.toFixed(2));
+        costo.margen = costo.total > 0 ? Number(((ganancia / costo.total) * 100).toFixed(2)) : 0;
+    } else {
+        costo.precioVenta = 0;
+        costo.ganancia = 0;
+        costo.margen = 0;
+    }
+
     const materialesUsados = {
         lana: { color: texto("colorLana"), marca: texto("marcaLana"), gramosUsados: num("gramosUsados") },
         relleno: { tipo: texto("tipoRelleno"), marca: texto("marcaRelleno"), gramosUsados: num("rellenoUsado") },
@@ -172,6 +224,8 @@ function validarCalculadora() {
         ["rellenoUsado", "relleno usado"],
         ["horasTrabajadas", "horas trabajadas"],
         ["valorHoras", "valor por hora"],
+        ["margenGanancia", "margen de ganancia"],
+        ["precioVentaManual", "precio de venta"],
     ];
     negativos.forEach(([id, etiqueta]) => {
         if (valor(id) !== "" && (Number.isNaN(num(id)) || num(id) < 0)) {
@@ -258,6 +312,19 @@ function calcularTodo() {
     document.getElementById("resManoObra").textContent = formatearMoneda(costo.manoObra);
     document.getElementById("resTotal").textContent = formatearMoneda(costo.total);
 
+    const hayVenta = costo.precioVenta > 0;
+    document.getElementById("resPrecioVenta").textContent = hayVenta ? formatearMoneda(costo.precioVenta) : "—";
+    document.getElementById("resGanancia").textContent = hayVenta ? formatearMoneda(costo.ganancia) : "—";
+    document.getElementById("resMargen").textContent = hayVenta ? `${costo.margen.toFixed(1)} %` : "—";
+
+    // Recordamos el valor por hora usado como valor por defecto.
+    const valorHoraUsado = num("valorHoras");
+    if (valorHoraUsado > 0) {
+        const config = cargarConfig();
+        config.valorHora = valorHoraUsado;
+        guardarConfig(config);
+    }
+
     mostrarDesgloseComponentes(componentes, document.getElementById("desgloseComponentes"));
     mostrarListaComponentes(componentes, listaComponentes);
 
@@ -272,11 +339,14 @@ function limpiarTodo() {
         "colorLana", "marcaLana", "precioOvillo", "gramosOvillo", "gramosUsados",
         "tipoRelleno", "marcaRelleno", "precioRelleno", "gramosRelleno", "rellenoUsado",
         "tipoComponente", "cantidadComprada", "precioCompra", "cantidadUtilizada",
-        "horasTrabajadas", "valorHoras", "nombreProyectoCalc"
+        "horasTrabajadas", "valorHoras", "nombreProyectoCalc",
+        "margenGanancia", "precioVentaManual"
     ].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = "";
     });
+
+    aplicarValorHoraPorDefecto();
 
     componentes.length = 0;
     mostrarListaComponentes(componentes, listaComponentes);
@@ -678,6 +748,29 @@ if (btnCerrarProyectoActivo) {
     });
 }
 
+const btnGuardarDatosProyecto = document.getElementById("btnGuardarDatosProyecto");
+if (btnGuardarDatosProyecto) {
+    btnGuardarDatosProyecto.addEventListener("click", () => {
+        if (!proyectoActivo) return;
+
+        const nombre = texto("editNombreProyecto");
+        if (!nombre) { alert("El nombre del proyecto no puede estar vacío"); return; }
+
+        proyectoActivo.nombre = nombre;
+        proyectoActivo.tipo = document.getElementById("editTipoProyecto").value;
+        proyectoActivo.notas = texto("editNotasProyecto");
+        proyectoActivo.fechaModificacion = new Date().toISOString();
+
+        guardarProyectos(proyectos);
+        renderProyectoActivo();
+        renderProyectos();
+        renderBannerProyecto();
+
+        const aviso = document.getElementById("avisoDatosProyecto");
+        if (aviso) aviso.textContent = "Datos guardados ✔";
+    });
+}
+
 const btnGuardarProyectoCompleto = document.getElementById("btnGuardarProyectoCompleto");
 if (btnGuardarProyectoCompleto) {
     btnGuardarProyectoCompleto.addEventListener("click", () => {
@@ -701,6 +794,8 @@ function abrirEditorProyecto(id) {
     const p = proyectos.find((x) => x.id === id);
     if (!p) return;
     proyectoActivo = p;
+    const aviso = document.getElementById("avisoDatosProyecto");
+    if (aviso) aviso.textContent = "";
     renderProyectoActivo();
     const editor = document.getElementById("editorProyecto");
     if (editor) editor.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -745,7 +840,8 @@ if (btnGuardarPatron) {
         const datos = {
             nombre: texto("patronNombre"),
             categoria: texto("patronCategoria"),
-            materiales: texto("patronMateriales"),
+            materiales: materialesForm.map((m) => ({ ...m })),
+            materialesTexto: texto("patronMateriales"),
             instrucciones: texto("patronInstrucciones"),
         };
         if (!datos.nombre) { alert("Escribe un nombre para el patrón"); return; }
@@ -756,6 +852,7 @@ if (btnGuardarPatron) {
                 patron.nombre = datos.nombre;
                 patron.categoria = datos.categoria;
                 patron.materiales = datos.materiales;
+                patron.materialesTexto = datos.materialesTexto;
                 patron.instrucciones = datos.instrucciones;
                 patron.fechaModificacion = new Date().toISOString();
             }
@@ -767,6 +864,91 @@ if (btnGuardarPatron) {
         limpiarFormPatron();
         renderPatrones();
     });
+}
+
+const btnAgregarMaterialPatron = document.getElementById("btnAgregarMaterialPatron");
+if (btnAgregarMaterialPatron) {
+    btnAgregarMaterialPatron.addEventListener("click", agregarMaterialPatron);
+}
+
+function agregarMaterialPatron() {
+    const nombre = texto("patronMatNombre");
+    if (!nombre) { alert("Escribe el nombre del material"); return; }
+
+    const cantidad = Number(document.getElementById("patronMatCantidad").value) || 0;
+    if (cantidad < 0) { alert("La cantidad no puede ser negativa"); return; }
+    const unidad = texto("patronMatUnidad");
+
+    materialesForm.push({ id: generarId(), nombre, cantidad, unidad });
+    limpiarCampos(["patronMatNombre", "patronMatCantidad", "patronMatUnidad"]);
+    renderMaterialesForm();
+    const input = document.getElementById("patronMatNombre");
+    if (input) input.focus();
+}
+
+function renderMaterialesForm() {
+    const cont = document.getElementById("listaMaterialesPatron");
+    if (!cont) return;
+    cont.innerHTML = "";
+
+    if (!materialesForm.length) {
+        cont.innerHTML = "<p class='empty-state'>Sin materiales cargados.</p>";
+        return;
+    }
+
+    materialesForm.forEach((m) => {
+        const cantidad = m.cantidad ? `${m.cantidad}${m.unidad ? " " + m.unidad : ""}` : (m.unidad || "");
+        const fila = document.createElement("div");
+        fila.className = "material-item";
+        fila.innerHTML = `<span class="material-nombre">${escapeHtml(m.nombre)}</span><span class="material-cantidad">${escapeHtml(cantidad)}</span><button type="button" class="btn-danger" data-del-material="${m.id}" title="Quitar">✕</button>`;
+        cont.appendChild(fila);
+    });
+
+    cont.querySelectorAll("[data-del-material]").forEach((b) => {
+        b.addEventListener("click", () => {
+            materialesForm = materialesForm.filter((m) => m.id !== b.dataset.delMaterial);
+            renderMaterialesForm();
+        });
+    });
+}
+
+/**
+ * Estima si un material del patrón está disponible en el inventario.
+ * Compara por nombre (tolerante) contra lanas/rellenos (peso) o componentes (unidades).
+ */
+function calcularDisponibilidadMaterial(mat) {
+    const n = normalizar(mat.nombre);
+    if (!n) return { estado: "sin-datos", disponible: 0 };
+
+    const coincide = (t) => {
+        const nt = normalizar(t);
+        return !!nt && (nt.includes(n) || n.includes(nt));
+    };
+
+    const unidad = normalizar(mat.unidad);
+    const esPeso = ["g", "gr", "grs", "gramo", "gramos", "kg"].includes(unidad);
+    const esUnidad = ["", "ud", "uds", "unidad", "unidades", "u"].includes(unidad);
+
+    let disponible = 0;
+    let hallado = false;
+
+    if (esPeso || esUnidad) {
+        inventario.lanas.forEach((l) => {
+            if (coincide(l.color) || coincide(l.marca)) { disponible += Number(l.gramosDisponibles) || 0; hallado = true; }
+        });
+        inventario.rellenos.forEach((r) => {
+            if (coincide(r.tipo) || coincide(r.marca)) { disponible += Number(r.gramosDisponibles) || 0; hallado = true; }
+        });
+    }
+    if (esUnidad) {
+        inventario.componentes.forEach((c) => {
+            if (coincide(c.tipo)) { disponible += Number(c.cantidadDisponible) || 0; hallado = true; }
+        });
+    }
+
+    if (!hallado) return { estado: "faltante", disponible: 0 };
+    if (mat.cantidad > 0 && disponible < mat.cantidad) return { estado: "insuficiente", disponible };
+    return { estado: "ok", disponible };
 }
 
 const btnCancelarEdicionPatron = document.getElementById("btnCancelarEdicionPatron");
@@ -783,8 +965,10 @@ if (patronBuscador) {
 }
 
 function limpiarFormPatron() {
-    limpiarCampos(["patronNombre", "patronCategoria", "patronMateriales", "patronInstrucciones"]);
+    limpiarCampos(["patronNombre", "patronCategoria", "patronMateriales", "patronInstrucciones", "patronMatNombre", "patronMatCantidad", "patronMatUnidad"]);
     patronEditandoId = null;
+    materialesForm = [];
+    renderMaterialesForm();
 
     const btn = document.getElementById("btnGuardarPatron");
     if (btn) btn.textContent = "Guardar Patrón";
@@ -803,8 +987,11 @@ function editarPatron(id) {
     patronEditandoId = id;
     document.getElementById("patronNombre").value = p.nombre;
     document.getElementById("patronCategoria").value = p.categoria;
-    document.getElementById("patronMateriales").value = p.materiales;
+    document.getElementById("patronMateriales").value = p.materialesTexto || "";
     document.getElementById("patronInstrucciones").value = p.instrucciones;
+
+    materialesForm = (p.materiales || []).map((m) => ({ ...m }));
+    renderMaterialesForm();
 
     const btn = document.getElementById("btnGuardarPatron");
     if (btn) btn.textContent = "Guardar cambios";
@@ -827,7 +1014,8 @@ function duplicarPatron(id) {
         {
             nombre: `${p.nombre} (copia)`,
             categoria: p.categoria,
-            materiales: p.materiales,
+            materiales: (p.materiales || []).map((m) => ({ ...m })),
+            materialesTexto: p.materialesTexto || "",
             instrucciones: p.instrucciones,
         },
         generarCodigoPatron(patrones)
@@ -835,6 +1023,35 @@ function duplicarPatron(id) {
     patrones.push(copia);
     guardarPatrones(patrones);
     renderPatrones();
+}
+
+function crearProyectoDesdePatron(id) {
+    const p = patrones.find((x) => x.id === id);
+    if (!p) return;
+
+    const categoria = normalizar(p.categoria);
+    const tipo = categoria.includes("prenda") ? "prenda" : (categoria.includes("amigurumi") ? "amigurumi" : "otro");
+
+    const lineasMateriales = (p.materiales || [])
+        .map((m) => `- ${m.nombre}${m.cantidad ? ` (${m.cantidad}${m.unidad ? " " + m.unidad : ""})` : ""}`)
+        .join("\n");
+
+    const notas = [
+        `Basado en el patrón ${p.codigo} - ${p.nombre}.`,
+        lineasMateriales ? `\nMateriales:\n${lineasMateriales}` : "",
+        p.materialesTexto ? `\n${p.materialesTexto}` : "",
+    ].join("").trim();
+
+    const nuevo = crearProyecto(p.nombre, tipo, notas);
+    nuevo.patronOrigen = { id: p.id, codigo: p.codigo, nombre: p.nombre };
+    proyectos.unshift(nuevo);
+    guardarProyectos(proyectos);
+    renderProyectos();
+
+    if (confirm(`Proyecto "${p.nombre}" creado desde el patrón ${p.codigo}.\n\n¿Abrirlo en el Planificador ahora?`)) {
+        irASeccion("planificador");
+        abrirEditorProyecto(nuevo.id);
+    }
 }
 
 function toggleRevisarPatron(id) {
@@ -982,6 +1199,17 @@ function renderProyectoActivo() {
     document.getElementById("nombreProyectoActivo").textContent = proyectoActivo.nombre;
     document.getElementById("tipoProyectoActivo").textContent = proyectoActivo.tipo;
 
+    // Datos editables del proyecto
+    const editNombre = document.getElementById("editNombreProyecto");
+    if (editNombre) editNombre.value = proyectoActivo.nombre;
+    const editTipo = document.getElementById("editTipoProyecto");
+    if (editTipo) {
+        editTipo.value = proyectoActivo.tipo;
+        if (editTipo.value !== proyectoActivo.tipo) editTipo.value = "otro";
+    }
+    const editNotas = document.getElementById("editNotasProyecto");
+    if (editNotas) editNotas.value = proyectoActivo.notas || "";
+
     const lista = document.getElementById("listaSeccionesProyecto");
     if (!lista) return;
     lista.innerHTML = "";
@@ -1019,6 +1247,18 @@ function renderDetalleProyecto(p) {
         <span>Mano de obra: ${formatearMoneda(costo.manoObra)}</span>
         <span><strong>Total: ${formatearMoneda(costo.total)}</strong></span>
     </div>`;
+
+    if (costo.precioVenta > 0) {
+        html += `<div class="item-details">
+            <span>Precio de venta: ${formatearMoneda(costo.precioVenta)}</span>
+            <span>Ganancia: ${formatearMoneda(costo.ganancia)}</span>
+            <span>Margen: ${(Number(costo.margen) || 0).toFixed(1)} %</span>
+        </div>`;
+    }
+
+    if (p.patronOrigen) {
+        html += `<p class="info-text">📄 Patrón de origen: ${escapeHtml(p.patronOrigen.codigo)} — ${escapeHtml(p.patronOrigen.nombre)}</p>`;
+    }
 
     const mat = p.materialesUsados;
     const lineas = [];
@@ -1141,10 +1381,47 @@ function renderDetallePatron(p) {
         <span><strong>Categoría:</strong> ${escapeHtml(p.categoria || "-")}</span>
         <span><strong>Modificado:</strong> ${new Date(p.fechaModificacion).toLocaleString("es-AR")}</span>
     </div>`;
-    html += `<h4>Materiales necesarios</h4><div class="seccion-notas">${escapeHtml(p.materiales || "Sin materiales")}</div>`;
+
+    html += `<h4>Materiales necesarios</h4>`;
+    const materiales = p.materiales || [];
+    if (materiales.length) {
+        html += `<ul class="lista-materiales-detalle">`;
+        materiales.forEach((m) => {
+            const disp = calcularDisponibilidadMaterial(m);
+            const cant = `${m.cantidad ? `${m.cantidad}` : ""}${m.unidad ? ` ${m.unidad}` : ""}`.trim();
+            let estado;
+            if (disp.estado === "ok") {
+                estado = `<span class="badge-ok">✅ ${disp.disponible}${m.unidad ? " " + m.unidad : ""} en inventario</span>`;
+            } else if (disp.estado === "insuficiente") {
+                estado = `<span class="badge-pending">⚠️ Solo ${disp.disponible}${m.unidad ? " " + m.unidad : ""} en inventario</span>`;
+            } else {
+                estado = `<span class="badge-pending">❌ No está en inventario</span>`;
+            }
+            html += `<li><strong>${escapeHtml(m.nombre)}</strong>${cant ? ` — necesita ${escapeHtml(cant)}` : ""} ${estado}</li>`;
+        });
+        html += `</ul>`;
+    }
+    if (p.materialesTexto) {
+        html += `<div class="seccion-notas">${escapeHtml(p.materialesTexto)}</div>`;
+    }
+    if (!materiales.length && !p.materialesTexto) {
+        html += `<p class="info-text">Sin materiales cargados.</p>`;
+    }
+
     html += `<h4>Instrucciones</h4><div class="seccion-notas">${escapeHtml(p.instrucciones || "Sin instrucciones")}</div>`;
     html += `</div>`;
     return html;
+}
+
+function renderResumenMateriales(p) {
+    const materiales = p.materiales || [];
+    if (materiales.length) {
+        const nombres = materiales.slice(0, 3).map((m) => m.nombre).join(", ");
+        const extra = materiales.length > 3 ? `, +${materiales.length - 3} más` : "";
+        return `${materiales.length} (${escapeHtml(nombres)}${extra})`;
+    }
+    if (p.materialesTexto) return escapeHtml(p.materialesTexto.slice(0, 60));
+    return "-";
 }
 
 function renderPatrones() {
@@ -1192,12 +1469,13 @@ function renderPatrones() {
                 </span>
             </div>
             <div class="item-details">
-                <span><strong>Materiales:</strong> ${escapeHtml((p.materiales || "-").slice(0, 80))}</span>
+                <span><strong>Materiales:</strong> ${renderResumenMateriales(p)}</span>
             </div>
             <div class="item-actions">
                 <button type="button" data-ver-patron="${p.id}">${abierto ? "Ocultar" : "Ver"}</button>
                 <button type="button" class="btn-secundario" data-edit-patron="${p.id}">Editar</button>
                 <button type="button" class="btn-info" data-dup-patron="${p.id}">Duplicar</button>
+                <button type="button" class="btn-info" data-proy-patron="${p.id}">Crear proyecto</button>
                 <button type="button" class="btn-danger" data-del-patron="${p.id}">Eliminar</button>
             </div>
             ${abierto ? renderDetallePatron(p) : ""}
@@ -1213,6 +1491,9 @@ function renderPatrones() {
     });
     lista.querySelectorAll("[data-dup-patron]").forEach((b) => {
         b.addEventListener("click", () => duplicarPatron(b.dataset.dupPatron));
+    });
+    lista.querySelectorAll("[data-proy-patron]").forEach((b) => {
+        b.addEventListener("click", () => crearProyectoDesdePatron(b.dataset.proyPatron));
     });
     lista.querySelectorAll("[data-del-patron]").forEach((b) => {
         b.addEventListener("click", () => {
@@ -1234,7 +1515,9 @@ function renderAll() {
     renderProyectoActivo();
     renderProyectos();
     renderPatrones();
+    renderMaterialesForm();
     renderBannerProyecto();
+    aplicarValorHoraPorDefecto();
 }
 
 // Arranque

@@ -113,8 +113,20 @@
         <input id="horasTrabajadas" type="number" step="0.1" min="0">
 
         <label for="valorHoras">Valor por Hora</label>
-        <input id="valorHoras" type="number" step="0.01" min="0">
+        <input id="valorHoras" type="number" step="0.01" min="0" placeholder="Ej: 3000 (se recuerda el último)">
 
+    </div>
+
+    <div class="venta">
+        <h2>Precio de Venta</h2>
+
+        <label for="margenGanancia">Margen de Ganancia (%)</label>
+        <input id="margenGanancia" type="number" step="1" min="0" placeholder="Ej: 50">
+
+        <label for="precioVentaManual">Precio de Venta (opcional)</label>
+        <input id="precioVentaManual" type="number" step="0.01" min="0" placeholder="Ej: 5000 (tiene prioridad)">
+
+        <p class="info-text">Si completás el precio de venta, se calcula la ganancia y el margen real. Si sólo ponés el margen, se calcula el precio a partir del costo.</p>
     </div>
 
     <div class="errores-calc" id="erroresCalculadora" style="display:none;"></div>
@@ -146,6 +158,18 @@
         <div class="resultado-item total">
             <span>Total General:</span>
             <span id="resTotal">$ 0,00</span>
+        </div>
+        <div class="resultado-item">
+            <span>Precio de Venta:</span>
+            <span id="resPrecioVenta">—</span>
+        </div>
+        <div class="resultado-item">
+            <span>Ganancia:</span>
+            <span id="resGanancia">—</span>
+        </div>
+        <div class="resultado-item">
+            <span>Margen:</span>
+            <span id="resMargen">—</span>
         </div>
 
         <h3>Desglose de Componentes</h3>
@@ -316,6 +340,30 @@
                 <button type="button" id="btnCerrarProyectoActivo" class="btn-link">Cerrar Editor</button>
             </div>
 
+            <h3>Datos del Proyecto</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="editNombreProyecto">Nombre</label>
+                    <input type="text" id="editNombreProyecto">
+                </div>
+                <div class="form-group">
+                    <label for="editTipoProyecto">Tipo</label>
+                    <select id="editTipoProyecto">
+                        <option value="amigurumi">Amigurumi</option>
+                        <option value="prenda">Prenda de Ropa</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label for="editNotasProyecto">Notas</label>
+                    <textarea id="editNotasProyecto" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="acciones-small">
+                <button type="button" id="btnGuardarDatosProyecto" class="btn-secundario">Guardar datos</button>
+                <span id="avisoDatosProyecto" class="info-text"></span>
+            </div>
+
             <h3>Añadir Sección</h3>
             <div class="form-grid">
                 <div class="form-group">
@@ -398,8 +446,26 @@
                     <input type="text" id="patronCategoria" placeholder="Ej: Amigurumi, Prenda">
                 </div>
                 <div class="form-group full-width">
-                    <label for="patronMateriales">Materiales Necesarios</label>
-                    <textarea id="patronMateriales" rows="2" placeholder="Lana, relleno, ojos, aguja..."></textarea>
+                    <label>Materiales Necesarios</label>
+                    <div class="material-row">
+                        <input type="text" id="patronMatNombre" placeholder="Material (Ej: Lana marrón)">
+                        <input type="number" id="patronMatCantidad" step="0.01" min="0" placeholder="Cant.">
+                        <input type="text" id="patronMatUnidad" list="unidadesMaterial" placeholder="Unidad">
+                        <datalist id="unidadesMaterial">
+                            <option value="g"></option>
+                            <option value="kg"></option>
+                            <option value="ud"></option>
+                            <option value="m"></option>
+                            <option value="cm"></option>
+                            <option value="ml"></option>
+                        </datalist>
+                        <button type="button" id="btnAgregarMaterialPatron">+ Añadir</button>
+                    </div>
+                    <div id="listaMaterialesPatron" class="lista-materiales"></div>
+                </div>
+                <div class="form-group full-width">
+                    <label for="patronMateriales">Materiales (notas libres)</label>
+                    <textarea id="patronMateriales" rows="2" placeholder="Aclaraciones: aguja, marcas, colores alternativos..."></textarea>
                 </div>
                 <div class="form-group full-width">
                     <label for="patronInstrucciones">Instrucciones / Notas</label>

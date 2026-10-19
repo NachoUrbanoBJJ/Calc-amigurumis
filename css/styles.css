@@ -592,7 +592,87 @@ textarea {
     font-family: 'Courier New', Courier, monospace;
 }
 
+/* Precio de venta (calculadora) */
+.venta {
+    background-color: white;
+    max-width: 1000px;
+    width: 95%;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+.venta input {
+    margin-bottom: 10px;
+}
+
+/* Materiales estructurados de los patrones */
+.material-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.material-row input {
+    flex: 1 1 auto;
+    min-width: 90px;
+}
+.material-row input#patronMatNombre {
+    flex: 2 1 180px;
+}
+.material-row button {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+}
+.lista-materiales {
+    margin-top: 10px;
+}
+.material-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background-color: #f9f9f9;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    border-left: 4px solid #ff5c8a;
+}
+.material-item .material-nombre {
+    font-weight: bold;
+    color: #444;
+}
+.material-item .material-cantidad {
+    color: #666;
+    font-size: 14px;
+    margin-left: auto;
+    margin-right: 8px;
+}
+.material-item button {
+    padding: 4px 10px;
+    font-size: 13px;
+}
+.lista-materiales-detalle {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0;
+}
+.lista-materiales-detalle li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+}
+
 @media (max-width: 600px) {
+    .material-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
     .info {
         flex-direction: column;
         gap: 0;
