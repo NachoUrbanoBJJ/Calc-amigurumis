@@ -12,7 +12,9 @@
         <nav class="nav">
             <button class="nav-btn active" data-section="calculadora">Calculadora</button>
             <button class="nav-btn" data-section="inventario">Inventario</button>
-            <button class="nav-btn" data-section="guardado">Guardado</button>
+            <button class="nav-btn" data-section="planificador">Planificador</button>
+            <button class="nav-btn" data-section="patrones">Patrones</button>
+            <button class="nav-btn" data-section="backup">Backup</button>
         </nav>
     </header>
 
@@ -142,6 +144,7 @@
 
         <h3>Desglose de Componentes</h3>
         <div id="desgloseComponentes"></div>
+        <p id="avisoStock" class="info-text"></p>
 
         <div class="guardar-proyecto-calculadora">
             <h3>Guardar como Proyecto</h3>
@@ -266,8 +269,8 @@
         </div>
     </section>
 
-    <!-- SECCIÓN PLANIFICADOR / GUARDADO -->
-    <section id="section-guardado" class="section">
+    <!-- SECCIÓN PLANIFICADOR -->
+    <section id="section-planificador" class="section">
         <div class="card">
             <h2>Planificador de Trabajos</h2>
             <p class="subtitulo">Crea proyectos (amigurumis o prendas de ropa), guarda puntos por secciones y planifica tus trabajos.</p>
@@ -376,7 +379,10 @@
             </div>
         </div>
 
-        <!-- Patrones Guardados -->
+    </section>
+
+    <!-- SECCIÓN PATRONES -->
+    <section id="section-patrones" class="section">
         <div class="card">
             <h3>Patrones Guardados</h3>
             <div class="form-grid">
@@ -404,7 +410,13 @@
             <div id="listaPatrones" class="lista-items"></div>
         </div>
 
+    </section>
+
+    <!-- SECCIÓN BACKUP -->
+    <section id="section-backup" class="section">
         <div class="card">
+            <h2>Backup de Datos</h2>
+            <p class="subtitulo">Exporta o importa todos tus datos: inventario, proyectos planificados, proyectos calculados y patrones.</p>
             <div class="acciones-small">
                 <button type="button" id="btnExportarTodo" class="btn-secundario">Exportar Todo (Backup JSON)</button>
                 <label for="inputImportarTodo" class="btn-secundario file-label">Importar Backup JSON</label>

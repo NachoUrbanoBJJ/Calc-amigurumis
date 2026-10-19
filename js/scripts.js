@@ -1,4 +1,4 @@
-import { calcularLana, calcularRelleno, calcularManoObra, calcularComponente, calcularTotalLanasYComponentes } from "./calculos.js";
+import { calcularLana, calcularRelleno, calcularManoObra, calcularComponente, calcularTotalComponentes } from "./calculos.js";
 import { mostrarComponente, formatearMoneda, mostrarListaComponentes, mostrarDesgloseComponentes } from "./ui.js";
 import {
     cargarProyectosPlan,
@@ -19,7 +19,10 @@ import {
     guardarInventario,
     agregarLanaInventario,
     agregarRellenoInventario,
-    agregarComponenteInventario
+    agregarComponenteInventario,
+    descontarLana,
+    descontarRelleno,
+    descontarComponentes
 } from "./inventario.js";
 
 const componentes = [];
@@ -63,6 +66,173 @@ navBtns.forEach(btn => {
     });
 });
 
+// Calculadora - acciones principales
+function agregarComponente() {
+    const tipo = tipoComponente ? tipoComponente.value : "";
+    const cantidadComprada = Number(document.getElementById("cantidadComprada").value);
+    const precioCompra = Number(document.getElementById("precioCompra").value);
+    const cantidadUtilizada = Number(document.getElementById("cantidadUtilizada").value);
+
+    if (!tipo) {
+        alert("Selecciona un tipo de componente");
+        return;
+    }
+    if (!(cantidadComprada > 0)) {
+        alert("La cantidad comprada debe ser mayor a 0");
+        return;
+    }
+    if (Number.isNaN(precioCompra) || precioCompra < 0) {
+        alert("El precio de compra no puede ser negativo");
+        return;
+    }
+    if (Number.isNaN(cantidadUtilizada) || cantidadUtilizada < 0) {
+        alert("La cantidad utilizada no puede ser negativa");
+        return;
+    }
+    if (cantidadUtilizada > cantidadComprada) {
+        if (!confirm("La cantidad usada es mayor a la comprada. ¿Continuar?")) return;
+    }
+
+    componentes.push({ tipo, cantidadComprada, precioCompra, cantidadUtilizada });
+
+    document.getElementById("cantidadComprada").value = "";
+    document.getElementById("precioCompra").value = "";
+    document.getElementById("cantidadUtilizada").value = "";
+
+    mostrarListaComponentes(componentes, listaComponentes);
+}
+
+function calcularTodo() {
+    const valor = (id) => document.getElementById(id).value;
+    const num = (id) => Number(valor(id));
+
+    const precioOvillo = num("precioOvillo");
+    const gramosOvillo = num("gramosOvillo");
+    const gramosUsados = num("gramosUsados");
+    const precioRelleno = num("precioRelleno");
+    const gramosRelleno = num("gramosRelleno");
+    const rellenoUsado = num("rellenoUsado");
+    const horasTrabajadas = num("horasTrabajadas");
+    const valorHora = num("valorHoras");
+
+    let hayErrores = false;
+    if (valor("precioOvillo") !== "" && precioOvillo < 0) hayErrores = true;
+    if (valor("gramosOvillo") !== "" && gramosOvillo <= 0) hayErrores = true;
+    if (valor("gramosUsados") !== "" && gramosUsados < 0) hayErrores = true;
+    if (valor("precioRelleno") !== "" && precioRelleno < 0) hayErrores = true;
+    if (valor("gramosRelleno") !== "" && gramosRelleno <= 0) hayErrores = true;
+    if (valor("rellenoUsado") !== "" && rellenoUsado < 0) hayErrores = true;
+    if (valor("horasTrabajadas") !== "" && horasTrabajadas < 0) hayErrores = true;
+    if (valor("valorHoras") !== "" && valorHora < 0) hayErrores = true;
+
+    if (hayErrores) {
+        alert("Revisa los valores: no se permiten negativos ni gramos/precio en 0.");
+        return;
+    }
+
+    const costoLanas = calcularLana(precioOvillo, gramosOvillo, gramosUsados);
+    const costoRellenoCalc = calcularRelleno(precioRelleno, gramosRelleno, rellenoUsado);
+    const costoManoObraCalc = calcularManoObra(horasTrabajadas, valorHora);
+    const costoComponentesCalc = calcularTotalComponentes(componentes);
+    const totalGeneral = costoLanas + costoRellenoCalc + costoComponentesCalc + costoManoObraCalc;
+
+    document.getElementById("resLanas").textContent = formatearMoneda(costoLanas);
+    document.getElementById("resRelleno").textContent = formatearMoneda(costoRellenoCalc);
+    document.getElementById("resComponentes").textContent = formatearMoneda(costoComponentesCalc);
+    document.getElementById("resManoObra").textContent = formatearMoneda(costoManoObraCalc);
+    document.getElementById("resTotal").textContent = formatearMoneda(totalGeneral);
+
+    mostrarDesgloseComponentes(componentes, document.getElementById("desgloseComponentes"));
+    mostrarListaComponentes(componentes, listaComponentes);
+
+    resultados.style.display = "block";
+    resultados.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    aplicarDescuentoInventario();
+}
+
+function limpiarTodo() {
+    [
+        "colorLana", "marcaLana", "precioOvillo", "gramosOvillo", "gramosUsados",
+        "tipoRelleno", "marcaRelleno", "precioRelleno", "gramosRelleno", "rellenoUsado",
+        "tipoComponente", "cantidadComprada", "precioCompra", "cantidadUtilizada",
+        "horasTrabajadas", "valorHoras", "nombreProyectoCalc"
+    ].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
+
+    componentes.length = 0;
+    mostrarListaComponentes(componentes, listaComponentes);
+
+    const desglose = document.getElementById("desgloseComponentes");
+    if (desglose) desglose.innerHTML = "";
+
+    resultados.style.display = "none";
+
+    const avisoStock = document.getElementById("avisoStock");
+    if (avisoStock) avisoStock.textContent = "";
+
+    if (tipoComponente) {
+        mostrarComponente(datosComponentes, tipoComponente);
+    }
+}
+
+// Descuento de stock del inventario (al presionar Calcular, con confirmación)
+function aplicarDescuentoInventario() {
+    const aviso = document.getElementById("avisoStock");
+
+    const colorLana = document.getElementById("colorLana").value.trim();
+    const marcaLana = document.getElementById("marcaLana").value.trim();
+    const gramosUsados = Number(document.getElementById("gramosUsados").value) || 0;
+    const tipoRelleno = document.getElementById("tipoRelleno").value.trim();
+    const marcaRelleno = document.getElementById("marcaRelleno").value.trim();
+    const rellenoUsado = Number(document.getElementById("rellenoUsado").value) || 0;
+
+    // Trabajamos sobre copias para poder "previsualizar" sin tocar el inventario real
+    const antes = JSON.parse(JSON.stringify(inventario));
+    const preview = JSON.parse(JSON.stringify(inventario));
+
+    descontarLana(preview, { color: colorLana, marca: marcaLana, gramosUsados });
+    descontarRelleno(preview, { tipo: tipoRelleno, marca: marcaRelleno, gramosUsados: rellenoUsado });
+    descontarComponentes(preview, componentes);
+
+    let gramosLana = 0;
+    antes.lanas.forEach((l, i) => { gramosLana += l.gramosDisponibles - preview.lanas[i].gramosDisponibles; });
+    let gramosRelleno = 0;
+    antes.rellenos.forEach((r, i) => { gramosRelleno += r.gramosDisponibles - preview.rellenos[i].gramosDisponibles; });
+    let componentesDescontados = 0;
+    antes.componentes.forEach((c, i) => { componentesDescontados += c.cantidadDisponible - preview.componentes[i].cantidadDisponible; });
+
+    gramosLana = Number(gramosLana.toFixed(3));
+    gramosRelleno = Number(gramosRelleno.toFixed(3));
+
+    const hayDescuento = gramosLana > 0 || gramosRelleno > 0 || componentesDescontados > 0;
+
+    if (!hayDescuento) {
+        if (aviso) aviso.textContent = "ℹ️ No se descontó stock: no hay material coincidente en el inventario.";
+        return;
+    }
+
+    const detalle = [];
+    if (gramosLana > 0) detalle.push(`• Lana: ${gramosLana} g`);
+    if (gramosRelleno > 0) detalle.push(`• Relleno: ${gramosRelleno} g`);
+    if (componentesDescontados > 0) detalle.push(`• Componentes: ${componentesDescontados} ud.`);
+
+    const confirmar = confirm("¿Descontar del inventario?\n\n" + detalle.join("\n"));
+    if (!confirmar) {
+        if (aviso) aviso.textContent = "ℹ️ No se descontó stock (cancelado).";
+        return;
+    }
+
+    inventario = preview;
+    guardarInventario(inventario);
+    renderInventario();
+    if (aviso) {
+        aviso.textContent = "✔️ Stock descontado del inventario → " + detalle.map((d) => d.replace("• ", "")).join(" · ");
+    }
+}
+
 // Planificador - estado
 let proyectosPlan = cargarProyectosPlan();
 let proyectoActivo = null;
@@ -90,7 +260,7 @@ if (btnGuardarDesdeCalculadora) {
         const costoLanas = calcularLana(precioOvillo, gramosOvillo, gramosUsados);
         const costoRellenoCalc = calcularRelleno(precioRelleno, gramosRelleno, rellenoUsado);
         const costoManoObraCalc = calcularManoObra(horasTrabajadas, valorHora);
-        const costoComponentesCalc = calcularTotalLanasYComponentes(componentes);
+        const costoComponentesCalc = calcularTotalComponentes(componentes);
         const total = costoLanas + costoRellenoCalc + costoComponentesCalc + costoManoObraCalc;
         const nuevo = guardarProyectoCalculado({
             nombre,

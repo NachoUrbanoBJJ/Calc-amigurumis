@@ -46,7 +46,7 @@ export function calcularComponente(cantidadComprada, precioCompra, cantidadUtili
     return isNaN(costoComponente) || !isFinite(costoComponente) ? 0 : costoComponente;
 }
 
-export function calcularTotalLanasYComponentes(componentes) {
+export function calcularTotalComponentes(componentes) {
     return componentes.reduce((total, comp) => {
         const costo = calcularComponente(
             comp.cantidadComprada,
