@@ -20,6 +20,10 @@
 
     <main>
     <section id="section-calculadora" class="section active">
+    <div class="banner-proyecto" id="bannerProyecto" style="display:none;">
+        <span>🧮 Calculando para: <strong id="bannerProyectoNombre"></strong></span>
+        <button type="button" id="btnQuitarProyectoSeleccionado" class="btn-link">Quitar</button>
+    </div>
     <div class="lanas">
 
         <h2>Lanas</h2>
@@ -148,14 +152,14 @@
 
         <div class="guardar-proyecto-calculadora">
             <h3>Guardar como Proyecto</h3>
-            <div class="form-group">
+            <div class="form-group" id="grupoNombreProyectoCalc">
                 <label for="nombreProyectoCalc">Nombre del Proyecto</label>
                 <input type="text" id="nombreProyectoCalc" placeholder="Ej: Osito, Toji Fushiguro...">
             </div>
             <div class="acciones-small">
                 <button type="button" id="btnGuardarDesdeCalculadora">Guardar Proyecto</button>
             </div>
-            <small class="info-text">Se guardará el coste y los materiales usados para descontar stock después.</small>
+            <small class="info-text" id="infoProyectoSeleccionado">Se creará un proyecto nuevo con el coste y los materiales usados.</small>
         </div>
     </div>
     </section>
@@ -365,18 +369,15 @@
             <div id="listaSeccionesProyecto" class="lista-secciones"></div>
 
             <div class="acciones">
-                <button type="button" id="btnGuardarProyectoCompleto">Guardar Proyecto Completo</button>
-                <button type="button" id="btnDescartarProyectoActivo" class="btn-secundario">Descartar Cambios</button>
+                <button type="button" id="btnGuardarProyectoCompleto">Guardar Proyecto</button>
             </div>
         </div>
 
-        <!-- Listado de Proyectos Guardados -->
+        <!-- Listado de Proyectos -->
         <div class="card">
-            <h3>Proyectos Guardados</h3>
-            <div id="listaProyectosGuardados" class="lista-items"></div>
-            <div class="acciones-small" id="accionesProyectosVacios" style="display:none;">
-                <p class="info-text">Aún no tienes proyectos guardados.</p>
-            </div>
+            <h3>Mis Proyectos</h3>
+            <p class="subtitulo">Revisá, editá, calculá o eliminá tus proyectos.</p>
+            <div id="listaProyectos" class="lista-items"></div>
         </div>
 
     </section>
