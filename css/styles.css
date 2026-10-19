@@ -719,3 +719,68 @@ textarea {
     color: #004a80;
     border: 1px solid #5ca8ff;
 }
+
+/* Modal propio (reemplaza alert/confirm del navegador) */
+.modal-contenedor {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.45);
+}
+.modal-caja {
+    background: #fff;
+    width: 100%;
+    max-width: 440px;
+    box-sizing: border-box;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+.modal-caja h3 {
+    margin-top: 0;
+    color: #ff5c8a;
+}
+.modal-caja p {
+    white-space: pre-line;
+    margin: 8px 0 18px;
+    color: #444;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+.modal-acciones {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+/* Badges de stock */
+.badge-agotado {
+    background-color: #d32f2f !important;
+    color: #fff !important;
+}
+.badge-bajo {
+    background-color: #f57c00 !important;
+    color: #fff !important;
+}
+
+/* Resumen de stock del inventario */
+.resumen-stock {
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin: 0;
+}
+.resumen-stock.resumen-ok {
+    background-color: #e8f7ee;
+    color: #0a6b34;
+    border: 1px solid #7bd3a0;
+}
+.resumen-stock.resumen-alerta {
+    background-color: #fdecea;
+    color: #8a1c1c;
+    border: 1px solid #f0a29b;
+}

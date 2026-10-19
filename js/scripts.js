@@ -2,7 +2,7 @@
 // Punto de entrada de la app.
 // Cada módulo registra sus propios handlers al importarse (efectos de import).
 // ---------------------------------------------------------------------------
-import { irASeccion, mostrarAvisoGlobal } from "./utils.js";
+import { irASeccion, esSeccionValida, obtenerSeccionGuardada, mostrarAvisoGlobal } from "./utils.js";
 import { renderAll } from "./render.js";
 import { registrarServiceWorker } from "./pwa.js";
 import { EVENTO_ERROR_STORAGE } from "./almacenamiento.js";
@@ -20,9 +20,11 @@ document.querySelectorAll(".nav-btn").forEach((btn) => {
     btn.addEventListener("click", () => irASeccion(btn.dataset.section));
 });
 
-// Si la URL trae #seccion (accesos directos de la PWA), abrimos esa sección.
+// Sección inicial: si la URL trae #seccion (accesos directos de la PWA) manda
+// esa; si no, restauramos la última sección visitada.
 const hash = (location.hash || "").replace("#", "");
-if (hash && document.getElementById(`section-${hash}`)) irASeccion(hash);
+const seccionInicial = esSeccionValida(hash) || obtenerSeccionGuardada();
+if (seccionInicial) irASeccion(seccionInicial);
 
 // ---------------------------------------------------------------------------
 // Robustez: avisos de errores de guardado y de arranque

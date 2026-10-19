@@ -20,11 +20,16 @@ export function formatearMoneda(valor) {
     }).format(Number.isFinite(numero) ? numero : 0);
 }
 
+/**
+ * Lista editable de componentes de la calculadora.
+ * Cada fila trae botones de Editar / Eliminar; la lógica vive en calculadora.js
+ * (acá sólo se renderiza y se marcan con data-comp-idx).
+ */
 export function mostrarListaComponentes(componentes, elemento) {
     if (!elemento) return;
 
     if (!componentes || componentes.length === 0) {
-        elemento.innerHTML = "<p style='color: #666; font-style: italic;'>No hay componentes agregados</p>";
+        elemento.innerHTML = "<p class='empty-state'>No hay componentes agregados</p>";
         return;
     }
 
@@ -38,6 +43,10 @@ export function mostrarListaComponentes(componentes, elemento) {
                 <div class="comp-details">
                     Comprado: ${escapeHtml(comp.cantidadComprada)} ud. | Precio compra: ${formatearMoneda(comp.precioCompra)} | 
                     Usado: ${escapeHtml(comp.cantidadUtilizada)} ud. | Costo: ${costoFormateado}
+                </div>
+                <div class="item-actions">
+                    <button type="button" class="btn-secundario" data-comp-idx="${index}" data-comp-accion="editar">Editar</button>
+                    <button type="button" class="btn-danger" data-comp-idx="${index}" data-comp-accion="eliminar">Eliminar</button>
                 </div>
             </div>
         `;

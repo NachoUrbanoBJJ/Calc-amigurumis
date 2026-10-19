@@ -2,6 +2,7 @@ import { estado } from "./estado.js";
 import { escapeHtml, texto, irASeccion, formatearFecha } from "./utils.js";
 import { formatearMoneda } from "./ui.js";
 import { crearProyecto, guardarProyectos, agregarSeccion, eliminarSeccion } from "./planificador.js";
+import { confirmar, mostrarAviso } from "./modal.js";
 
 // ---------------------------------------------------------------------------
 // Proyecto seleccionado (destino del cálculo de la calculadora)
@@ -48,10 +49,10 @@ if (btnQuitarProyectoSeleccionado) {
 // ---------------------------------------------------------------------------
 const btnCrearProyecto = document.getElementById("btnCrearProyecto");
 if (btnCrearProyecto) {
-    btnCrearProyecto.addEventListener("click", () => {
+    btnCrearProyecto.addEventListener("click", async () => {
         const nombre = texto("planNombreProyecto");
         if (!nombre) {
-            alert("Escribe un nombre para el proyecto");
+            await mostrarAviso("Escribí un nombre para crear el proyecto.", { titulo: "Falta el nombre" });
             return;
         }
 
@@ -77,9 +78,11 @@ if (btnCrearProyecto) {
 
 const btnAgregarSeccion = document.getElementById("btnAgregarSeccion");
 if (btnAgregarSeccion) {
-    btnAgregarSeccion.addEventListener("click", () => {
+    btnAgregarSeccion.addEventListener("click", async () => {
         if (!estado.proyectoActivo) {
-            alert("Abrí o creá un proyecto primero");
+            await mostrarAviso("Abrí o creá un proyecto primero para añadirle secciones.", {
+                titulo: "No hay proyecto abierto",
+            });
             return;
         }
 
@@ -91,7 +94,7 @@ if (btnAgregarSeccion) {
             notas: texto("planNotasSeccion"),
         };
         if (!datos.nombre) {
-            alert("Escribe un nombre para la sección");
+            await mostrarAviso("Escribí un nombre para la sección.", { titulo: "Falta el nombre" });
             return;
         }
 
@@ -122,12 +125,12 @@ if (btnCerrarProyectoActivo) {
 
 const btnGuardarDatosProyecto = document.getElementById("btnGuardarDatosProyecto");
 if (btnGuardarDatosProyecto) {
-    btnGuardarDatosProyecto.addEventListener("click", () => {
+    btnGuardarDatosProyecto.addEventListener("click", async () => {
         if (!estado.proyectoActivo) return;
 
         const nombre = texto("editNombreProyecto");
         if (!nombre) {
-            alert("El nombre del proyecto no puede estar vacío");
+            await mostrarAviso("El nombre del proyecto no puede quedar vacío.", { titulo: "Nombre vacío" });
             return;
         }
 
@@ -148,19 +151,24 @@ if (btnGuardarDatosProyecto) {
 
 const btnGuardarProyectoCompleto = document.getElementById("btnGuardarProyectoCompleto");
 if (btnGuardarProyectoCompleto) {
-    btnGuardarProyectoCompleto.addEventListener("click", () => {
+    btnGuardarProyectoCompleto.addEventListener("click", async () => {
         if (!estado.proyectoActivo) return;
 
         estado.proyectoActivo.fechaModificacion = new Date().toISOString();
         guardarProyectos(estado.proyectos);
         renderProyectos();
 
-        if (confirm(`¿Querés calcular los costos de "${estado.proyectoActivo.nombre}" ahora?`)) {
-            seleccionarParaCalcular(estado.proyectoActivo.id);
+        const ahora = await confirmar(`¿Querés calcular los costos de "${estado.proyectoActivo.nombre}" ahora?`, {
+            titulo: "Proyecto guardado",
+            ok: "Sí, calcular",
+            cancelo: "Ahora no",
+        });
+        if (ahora) {
+            await seleccionarParaCalcular(estado.proyectoActivo.id);
         } else {
             estado.proyectoActivo = null;
             renderProyectoActivo();
-            alert("Proyecto guardado.");
+            await mostrarAviso("Proyecto guardado.", { titulo: "Listo" });
         }
     });
 }
@@ -184,19 +192,28 @@ function toggleRevisar(id) {
     renderProyectos();
 }
 
-function seleccionarParaCalcular(id) {
+async function seleccionarParaCalcular(id) {
     const p = estado.proyectos.find((x) => x.id === id);
     if (!p) return;
     estado.proyectoSeleccionadoId = id;
     renderBannerProyecto();
     irASeccion("calculadora");
-    alert(`Proyecto seleccionado: ${p.nombre}\n\nCompletá la calculadora y el coste se guardará en este proyecto.`);
+    await mostrarAviso(
+        `Proyecto seleccionado: ${p.nombre}\n\nCompletá la calculadora y el coste se guardará en este proyecto.`,
+        {
+            titulo: "Proyecto listo para calcular",
+        }
+    );
 }
 
-function eliminarProyecto(id) {
+async function eliminarProyecto(id) {
     const p = estado.proyectos.find((x) => x.id === id);
     if (!p) return;
-    if (!confirm(`¿Eliminar el proyecto "${p.nombre}"? Esta acción no se puede deshacer.`)) return;
+    const ok = await confirmar(`¿Eliminar el proyecto "${p.nombre}"?\n\nEsta acción no se puede deshacer.`, {
+        titulo: "Eliminar proyecto",
+        ok: "Eliminar",
+    });
+    if (!ok) return;
 
     estado.proyectos = estado.proyectos.filter((x) => x.id !== id);
     if (estado.proyectoActivo && estado.proyectoActivo.id === id) estado.proyectoActivo = null;

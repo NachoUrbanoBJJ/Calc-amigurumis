@@ -130,6 +130,9 @@
         <button type="button" id="btnAgregarComponente">
             Agregar Componente
         </button>
+        <button type="button" id="btnCancelarEdicionComponenteCalc" class="btn-secundario" style="display:none;">
+            Cancelar edición
+        </button>
         </div>
 
         <div id="listaComponentes"></div>
@@ -224,6 +227,7 @@
         <div class="card">
             <h2>Inventario</h2>
             <p class="subtitulo">Gestiona el stock disponible de lanas, relleno y componentes.</p>
+            <p id="inventarioResumen" class="info-text"></p>
         </div>
 
         <!-- Lanas en Inventario -->
@@ -253,6 +257,7 @@
             </div>
             <div class="acciones-small">
                 <button type="button" id="btnAgregarLanaInv">Añadir a Inventario</button>
+                <button type="button" id="btnCancelarEdicionLana" class="btn-secundario" style="display:none;">Cancelar edición</button>
             </div>
             <h3>Stock de Lanas</h3>
             <div id="listaLanasInv" class="lista-items"></div>
@@ -285,6 +290,7 @@
             </div>
             <div class="acciones-small">
                 <button type="button" id="btnAgregarRellenoInv">Añadir a Inventario</button>
+                <button type="button" id="btnCancelarEdicionRelleno" class="btn-secundario" style="display:none;">Cancelar edición</button>
             </div>
             <h3>Stock de Relleno</h3>
             <div id="listaRellenosInv" class="lista-items"></div>
@@ -313,6 +319,7 @@
             </div>
             <div class="acciones-small">
                 <button type="button" id="btnAgregarCompInv">Añadir a Inventario</button>
+                <button type="button" id="btnCancelarEdicionComponente" class="btn-secundario" style="display:none;">Cancelar edición</button>
             </div>
             <h3>Stock de Componentes</h3>
             <div id="listaComponentesInv" class="lista-items"></div>
@@ -529,6 +536,18 @@
         </div>
     </section>
     </main>
+
+    <!-- Modal propio para reemplazar alert/confirm nativos -->
+    <div class="modal-contenedor" id="modalContenedor" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+        <div class="modal-caja">
+            <h3 id="modalTitulo">Aviso</h3>
+            <p id="modalMensaje"></p>
+            <div class="modal-acciones">
+                <button type="button" id="modalAceptar">Aceptar</button>
+                <button type="button" id="modalCancelar" class="btn-secundario">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="js/scripts.js"></script>
 </body>

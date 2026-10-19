@@ -37,13 +37,16 @@ export function coincideTexto(a, b) {
 /**
  * Deja cualquier estructura de inventario (localStorage o backup) con la forma
  * actual, descartando elementos que no sean objetos.
+ * Garantiza que cada material tenga `id` (necesario para editar/eliminar).
  */
 export function normalizarInventario(data) {
     const base = esObjeto(data) ? data : {};
+    const conId = (lista) =>
+        Array.isArray(lista) ? lista.filter(esObjeto).map((x) => ({ ...x, id: x.id || generarId() })) : [];
     return {
-        lanas: Array.isArray(base.lanas) ? base.lanas.filter(esObjeto) : [],
-        rellenos: Array.isArray(base.rellenos) ? base.rellenos.filter(esObjeto) : [],
-        componentes: Array.isArray(base.componentes) ? base.componentes.filter(esObjeto) : [],
+        lanas: conId(base.lanas),
+        rellenos: conId(base.rellenos),
+        componentes: conId(base.componentes),
     };
 }
 
@@ -51,9 +54,25 @@ export function cargarInventario() {
     const data = leerJson(STORAGE_KEY_INVENTARIO, null);
     return normalizarInventario(data);
 }
-
 export function guardarInventario(inventario) {
     return guardarJson(STORAGE_KEY_INVENTARIO, inventario);
+}
+
+const UMBRAL_STOCK_BAJO = 0.1; // 10 % de la referencia
+
+/**
+ * Clasifica el stock de un material.
+ * `referencia` es el gramaje de un ovillo (lana), el total del paquete
+ * (relleno) o la cantidad comprada (componente).
+ * Devuelve null cuando hay stock suficiente.
+ */
+export function clasificarStock(disponible, referencia) {
+    const disp = Number(disponible) || 0;
+    const ref = Number(referencia) || 0;
+
+    if (disp <= 0) return { clase: "badge-agotado", texto: "Sin stock" };
+    if (ref > 0 && disp <= ref * UMBRAL_STOCK_BAJO) return { clase: "badge-bajo", texto: "Stock bajo" };
+    return null;
 }
 
 export function agregarLanaInventario(inventario, lana) {

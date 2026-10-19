@@ -1,6 +1,7 @@
 import { cargarProyectos, cargarPatrones } from "./planificador.js";
 import { cargarInventario } from "./inventario.js";
-import { leerJson, guardarJson, storageDisponible } from "./almacenamiento.js";
+import { storageDisponible } from "./almacenamiento.js";
+import { cargarConfig, guardarConfig } from "./config.js";
 
 // ---------------------------------------------------------------------------
 // Estado en memoria compartido por toda la app.
@@ -32,22 +33,15 @@ export const estado = {
 // ---------------------------------------------------------------------------
 // Configuración persistente (valores por defecto)
 // ---------------------------------------------------------------------------
-const STORAGE_KEY_CONFIG = "calc-amigurumis-config-v1";
+
+// Se reexportan para mantener el API usado por la calculadora.
+export { cargarConfig, guardarConfig };
 
 /**
  * Indica si el navegador pudo inicializar el estado persistente.
  * Si es false, conviene avisar que los datos no se guardarán.
  */
 export const almacenamientoOk = storageDisponible();
-
-export function cargarConfig() {
-    const config = leerJson(STORAGE_KEY_CONFIG, {});
-    return config && typeof config === "object" ? config : {};
-}
-
-export function guardarConfig(config) {
-    return guardarJson(STORAGE_KEY_CONFIG, config);
-}
 
 /**
  * Precarga el valor por hora la última vez usado (si el campo está vacío).

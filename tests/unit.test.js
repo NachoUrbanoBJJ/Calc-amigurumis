@@ -37,7 +37,10 @@ import {
     cargarInventario,
     normalizarInventario,
     coincideTexto,
+    clasificarStock,
 } from "../js/inventario.js";
+
+import { esSeccionValida } from "../js/utils.js";
 
 import { leerJson, guardarJson, storageDisponible } from "../js/almacenamiento.js";
 
@@ -357,6 +360,34 @@ test("normalizarInventario: descarta elementos no válidos", () => {
     assert.deepEqual(inv.rellenos, []);
     assert.equal(inv.componentes.length, 1);
     assert.deepEqual(normalizarInventario(null), { lanas: [], rellenos: [], componentes: [] });
+});
+
+test("normalizarInventario: asigna id a los materiales que no lo tienen", () => {
+    const inv = normalizarInventario({
+        lanas: [{ id: "fijo", color: "Rojo" }, { color: "Azul" }],
+        rellenos: [],
+        componentes: [],
+    });
+    assert.equal(inv.lanas[0].id, "fijo");
+    assert.ok(inv.lanas[1].id);
+    assert.notEqual(inv.lanas[1].id, "fijo");
+});
+
+test("clasificarStock: sin stock, stock bajo y stock suficiente", () => {
+    assert.deepEqual(clasificarStock(0, 100), { clase: "badge-agotado", texto: "Sin stock" });
+    assert.deepEqual(clasificarStock(-5, 100), { clase: "badge-agotado", texto: "Sin stock" });
+    assert.deepEqual(clasificarStock(10, 100), { clase: "badge-bajo", texto: "Stock bajo" });
+    assert.equal(clasificarStock(11, 100), null);
+    assert.equal(clasificarStock(50, 0), null);
+    assert.deepEqual(clasificarStock(0, 0), { clase: "badge-agotado", texto: "Sin stock" });
+});
+
+test("esSeccionValida: acepta sólo las secciones existentes", () => {
+    assert.equal(esSeccionValida("inventario"), "inventario");
+    assert.equal(esSeccionValida(" otra "), "");
+    assert.equal(esSeccionValida(null), "");
+    assert.equal(esSeccionValida(undefined), "");
+    assert.equal(esSeccionValida("../etc"), "");
 });
 
 // ---------------------------------------------------------------------------

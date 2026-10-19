@@ -1,6 +1,16 @@
+import { cargarConfig, actualizarConfig } from "./config.js";
+
 // ---------------------------------------------------------------------------
 // Utilidades de DOM y formato compartidas por toda la app.
 // ---------------------------------------------------------------------------
+const SECCIONES = ["calculadora", "inventario", "planificador", "patrones", "backup"];
+
+/**
+ * Devuelve la sección sólo si es una de las existentes (evita datos corruptos).
+ */
+export function esSeccionValida(nombre) {
+    return SECCIONES.includes(nombre) ? nombre : "";
+}
 
 /**
  * Escapa texto para insertarlo de forma segura dentro de HTML.
@@ -66,16 +76,29 @@ export function formatearFecha(iso) {
 }
 
 /**
- * Cambia la sección visible (Calculadora / Inventario / Planificador / ...).
+ * Cambia la sección visible (Calculadora / Inventario / Planificador / ...)
+ * y la guarda para restaurarla la próxima vez que se abra la app.
  */
 export function irASeccion(nombre) {
+    const seccion = esSeccionValida(nombre);
+    if (!seccion) return;
+
     document.querySelectorAll(".nav-btn").forEach((b) => {
-        b.classList.toggle("active", b.dataset.section === nombre);
+        b.classList.toggle("active", b.dataset.section === seccion);
     });
     document.querySelectorAll(".section").forEach((s) => {
-        s.classList.toggle("active", s.id === `section-${nombre}`);
+        s.classList.toggle("active", s.id === `section-${seccion}`);
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
+
+    actualizarConfig({ ultimaSeccion: seccion });
+}
+
+/**
+ * Última sección visitada (vacío si no hay o no es válida).
+ */
+export function obtenerSeccionGuardada() {
+    return esSeccionValida(cargarConfig().ultimaSeccion);
 }
 
 /**

@@ -38,7 +38,9 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ **Inventario de materiales (lanas, relleno, componentes)**
 - ✅ **Planificador de trabajos (proyecto + secciones: puntos/vueltas/altura/notas)**
 - ✅ **Descontar stock al calcular (con confirmación)**
-- ⬜ **Alertas de stock bajo / sin stock**
+- ✅ **Alertas de stock bajo / sin stock** (badge en cada material + resumen del inventario)
+- ✅ **Editar y eliminar materiales del inventario**
+- ✅ **Editar y eliminar componentes de la calculadora**
 - ✅ **Menú de navegación (Calculadora / Inventario / Planificador / Patrones / Backup)**
 - ✅ **Exportar/Importar Backup JSON (global)**
 - ✅ **Exportar/Importar Inventario JSON**
@@ -94,7 +96,21 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ Validación/descarte de datos corruptos (`esObjeto`, `normalizarInventario`)
 - ✅ Comparación de números con tolerancia (detección de duplicados con decimales)
 - ✅ Fechas inválidas muestran `-` en vez de "Invalid Date"
-- ✅ Tests ampliados (34 en total)
+- ✅ Tests ampliados (37 en total)
+
+## Bloque U — UX y funcionalidad (modales + CRUD) ✅
+
+- ✅ **Modales propios** en lugar de `alert()` / `confirm()` del navegador (Promise + teclado:
+  Enter acepta, Esc cancela; arreglos multilínea; fallback a los nativos si falta el DOM)
+- ✅ **Recordar la última sección** visitada al recargar (se guarda en la config)
+- ✅ **Inventario editable**: editar y eliminar lanas, rellenos y componentes (con confirmación
+  y conservando IDs estables); los materiales importados sin ID reciben uno automáticamente
+- ✅ **Componentes de la calculadora editables**: editar (carga el formulario y guarda en la
+  misma fila) y eliminar con confirmación
+- ✅ **Avisos de stock**: badges `Sin stock` / `Stock bajo` y resumen arriba del inventario
+- ✅ **Descuento de stock transparente**: si no alcanza, avisa cuánto faltó
+- ✅ Botones de cancelar edición y nombres de acción coherentes en todos los formularios
+- ✅ Tests ampliados (37 en total)
 
 ## Bloque 6 — App Android nativa (Capacitor) 📱
 
@@ -130,9 +146,10 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 
 ```
 Bloque 0 → Bloque 1 → Bloque 4 (responsive) → Bloque 3 → Bloque 5 (PWA) →
-Bloque C (prolijidad) → Bloque R (robustez) → Bloque 2 (extras) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
+Bloque C (prolijidad) → Bloque R (robustez) → Bloque U (UX + CRUD) →
+Bloque 2 (extras) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
 ```
 
 Primero que funcione (0–1), después que se vea bien (4), que no pierda datos (3),
-que sea instalable (5), que el código esté prolijo (C), y luego features (2),
-nativo (6) y tienda (7).
+que sea instalable (5), que el código esté prolijo (C), que no falle ni incomode (R/U),
+y luego features (2), nativo (6) y tienda (7).

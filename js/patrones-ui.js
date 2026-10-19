@@ -11,13 +11,14 @@ import {
     guardarProyectos,
 } from "./planificador.js";
 import { renderProyectos, abrirEditorProyecto } from "./planificador-ui.js";
+import { confirmar, mostrarAviso } from "./modal.js";
 
 // ---------------------------------------------------------------------------
 // Formulario de patrón
 // ---------------------------------------------------------------------------
 const btnGuardarPatron = document.getElementById("btnGuardarPatron");
 if (btnGuardarPatron) {
-    btnGuardarPatron.addEventListener("click", () => {
+    btnGuardarPatron.addEventListener("click", async () => {
         const datos = {
             nombre: texto("patronNombre"),
             categoria: texto("patronCategoria"),
@@ -26,7 +27,7 @@ if (btnGuardarPatron) {
             instrucciones: texto("patronInstrucciones"),
         };
         if (!datos.nombre) {
-            alert("Escribe un nombre para el patrón");
+            await mostrarAviso("Escribí un nombre para el patrón.", { titulo: "Falta el nombre" });
             return;
         }
 
@@ -55,16 +56,16 @@ if (btnAgregarMaterialPatron) {
     btnAgregarMaterialPatron.addEventListener("click", agregarMaterialPatron);
 }
 
-function agregarMaterialPatron() {
+async function agregarMaterialPatron() {
     const nombre = texto("patronMatNombre");
     if (!nombre) {
-        alert("Escribe el nombre del material");
+        await mostrarAviso("Escribí el nombre del material.", { titulo: "Falta el nombre" });
         return;
     }
 
     const cantidad = Number(document.getElementById("patronMatCantidad").value) || 0;
     if (cantidad < 0) {
-        alert("La cantidad no puede ser negativa");
+        await mostrarAviso("La cantidad no puede ser negativa.", { titulo: "Revisá el dato" });
         return;
     }
     const unidad = texto("patronMatUnidad");
@@ -231,7 +232,7 @@ function duplicarPatron(id) {
     renderPatrones();
 }
 
-function crearProyectoDesdePatron(id) {
+async function crearProyectoDesdePatron(id) {
     const p = estado.patrones.find((x) => x.id === id);
     if (!p) return;
 
@@ -256,7 +257,11 @@ function crearProyectoDesdePatron(id) {
     guardarProyectos(estado.proyectos);
     renderProyectos();
 
-    if (confirm(`Proyecto "${p.nombre}" creado desde el patrón ${p.codigo}.\n\n¿Abrirlo en el Planificador ahora?`)) {
+    const abrir = await confirmar(
+        `Proyecto "${p.nombre}" creado desde el patrón ${p.codigo}.\n\n¿Abrirlo en el Planificador ahora?`,
+        { titulo: "Proyecto creado", ok: "Abrir proyecto", cancelo: "Dejar aquí" }
+    );
+    if (abrir) {
         irASeccion("planificador");
         abrirEditorProyecto(nuevo.id);
     }
@@ -429,10 +434,14 @@ export function renderPatrones() {
         b.addEventListener("click", () => crearProyectoDesdePatron(b.dataset.proyPatron));
     });
     lista.querySelectorAll("[data-del-patron]").forEach((b) => {
-        b.addEventListener("click", () => {
+        b.addEventListener("click", async () => {
             const p = estado.patrones.find((x) => x.id === b.dataset.delPatron);
             if (!p) return;
-            if (!confirm(`¿Eliminar el patrón "${p.nombre}" (${p.codigo})?`)) return;
+            const ok = await confirmar(`¿Eliminar el patrón "${p.nombre}" (${p.codigo})?\n\nNo se puede deshacer.`, {
+                titulo: "Eliminar patrón",
+                ok: "Eliminar",
+            });
+            if (!ok) return;
 
             eliminarPatron(estado.patrones, p.id);
             if (estado.patronRevisadoId === p.id) estado.patronRevisadoId = null;

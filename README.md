@@ -7,8 +7,11 @@ componentes y mano de obra), guardar patrones, planificar proyectos y administra
 
 - **Calculadora**: costo de lana, relleno, componentes y mano de obra + total automático.
 - **Precio de venta**: margen de ganancia (%) o precio manual (el manual tiene prioridad).
-- **Inventario**: lanas, rellenos y componentes con stock disponible.
-- **Descuento de stock**: al presionar _Calcular_ (con confirmación) se descuenta del inventario.
+- **Inventario**: lanas, rellenos y componentes con stock disponible; se pueden **editar y eliminar**.
+- **Alertas de stock**: cada material muestra `Sin stock` / `Stock bajo` y hay un resumen arriba.
+- **Descuento de stock**: al presionar _Calcular_ (con confirmación) se descuenta del inventario;
+  si no alcanza, avisa cuánto faltó.
+- **Componentes de la calculadora**: se pueden agregar, **editar y eliminar** antes de calcular.
 - **Planificador de proyectos**: secciones (puntos, vueltas, altura, notas), estado (planificando/terminado).
 - **Patrones**: código legible `PAT-0001`, materiales estructurados, búsqueda por nombre/código y
   chips por categoría (mapeo). Se puede crear un proyecto a partir de un patrón.
@@ -16,6 +19,7 @@ componentes y mano de obra), guardar patrones, planificar proyectos y administra
 - **PWA**: instalable en PC y Android, funciona sin conexión.
 - **Robustez**: guardado a prueba de fallos (avisa si el almacenamiento está lleno o bloqueado),
   sin descuentos de stock duplicados, avisos globales ante errores inesperados.
+- **UX**: diálogos propios (no `alert`/`confirm` del navegador) y la app recuerda la última sección.
 - Moneda en **pesos argentinos (ARS)**. Validaciones de entrada y escapado de HTML.
 
 ## Requisitos
@@ -96,7 +100,7 @@ Calcuadora/
 | `calc-amigurumis-inventario-v1` | Lanas, rellenos y componentes.         |
 | `calc-amigurumis-proyectos-v2`  | Proyectos (planificando/terminados).   |
 | `calc-amigurumis-patrones-v2`   | Patrones con código `PAT-000x`.        |
-| `calc-amigurumis-config-v1`     | Configuración (último valor por hora). |
+| `calc-amigurumis-config-v1`     | Configuración (último valor por hora + última sección). |
 
 ## Estado actual
 
@@ -106,4 +110,5 @@ Ver [`ROADMAP.md`](./ROADMAP.md). Resumen:
 - ✅ Inventario, proyectos y patrones con búsqueda y mapeo.
 - ✅ PWA instalable (manifest + service worker + iconos).
 - ✅ Bloque R: robustez y manejo de errores.
+- ✅ Bloque U: modales propios, CRUD de inventario/componentes, avisos de stock y memoria de sección.
 - ⬜ Bloques 4-7: pulido de UI, backup avanzado y empaquetado nativo (Capacitor).

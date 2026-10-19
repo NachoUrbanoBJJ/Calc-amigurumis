@@ -3,6 +3,7 @@ import { descargarJson, esObjeto } from "./utils.js";
 import { normalizarPatrones, normalizarProyecto, guardarPatrones, guardarProyectos } from "./planificador.js";
 import { guardarInventario, normalizarInventario } from "./inventario.js";
 import { renderAll } from "./render.js";
+import { confirmar, mostrarAviso } from "./modal.js";
 
 // ---------------------------------------------------------------------------
 // Backup completo (inventario + proyectos + patrones)
@@ -38,12 +39,16 @@ if (inputImportarTodo) {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
+        reader.onload = async (ev) => {
             try {
                 const data = JSON.parse(ev.target.result);
                 if (!esObjeto(data)) throw new Error("Formato inválido");
 
-                if (!confirm("Esto reemplazará tus datos actuales (inventario, proyectos y patrones). ¿Continuar?")) {
+                const ok = await confirmar(
+                    "Esto reemplazará tus datos actuales (inventario, proyectos y patrones). ¿Continuar?",
+                    { titulo: "Importar backup", ok: "Sí, reemplazar" }
+                );
+                if (!ok) {
                     e.target.value = "";
                     return;
                 }
@@ -52,7 +57,9 @@ if (inputImportarTodo) {
 
                 if (data.inventario != null) {
                     estado.inventario = normalizarInventario(data.inventario);
-                    resumen.push(`${estado.inventario.lanas.length} lanas`);
+                    resumen.push(
+                        `${estado.inventario.lanas.length} lanas, ${estado.inventario.rellenos.length} rellenos, ${estado.inventario.componentes.length} componentes`
+                    );
                 }
                 if (Array.isArray(data.patrones)) {
                     estado.patrones = normalizarPatrones(data.patrones);
@@ -77,13 +84,16 @@ if (inputImportarTodo) {
                 guardarProyectos(estado.proyectos);
 
                 renderAll();
-                alert(
+                await mostrarAviso(
                     resumen.length
                         ? `Backup importado: ${resumen.join(", ")}.`
-                        : "El backup no contenía datos reconocibles."
+                        : "El backup no contenía datos reconocibles.",
+                    { titulo: "Importación terminada" }
                 );
             } catch {
-                alert("Archivo JSON inválido");
+                await mostrarAviso("No se pudo importar el archivo. Tiene que ser un JSON de backup válido.", {
+                    titulo: "Archivo inválido",
+                });
             }
             e.target.value = "";
         };

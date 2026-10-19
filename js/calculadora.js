@@ -1,5 +1,6 @@
 import { estado, cargarConfig, guardarConfig, aplicarValorHoraPorDefecto } from "./estado.js";
 import { escapeHtml, texto, num, valor } from "./utils.js";
+import { confirmar, mostrarAviso } from "./modal.js";
 import { mostrarComponente, formatearMoneda, mostrarListaComponentes, mostrarDesgloseComponentes } from "./ui.js";
 import { calcularLana, calcularRelleno, calcularManoObra, calcularTotalComponentes } from "./calculos.js";
 import { descontarLana, descontarRelleno, descontarComponentes, guardarInventario } from "./inventario.js";
@@ -26,41 +27,135 @@ if (btnAgregarComponente) btnAgregarComponente.addEventListener("click", agregar
 if (btnCalcular) btnCalcular.addEventListener("click", calcularTodo);
 if (btnLimpiar) btnLimpiar.addEventListener("click", limpiarTodo);
 
+const btnCancelarEdicionComponenteCalc = document.getElementById("btnCancelarEdicionComponenteCalc");
+if (btnCancelarEdicionComponenteCalc) {
+    btnCancelarEdicionComponenteCalc.addEventListener("click", () => cancelarEdicionComponente());
+}
+
 // ---------------------------------------------------------------------------
-// Componentes
+// Componentes (alta, edición y baja)
 // ---------------------------------------------------------------------------
-function agregarComponente() {
+// Índice del componente que se está editando (null = modo alta).
+let editandoComponenteIdx = null;
+
+function pintarComponentes() {
+    mostrarListaComponentes(estado.componentes, listaComponentes);
+    if (listaComponentes) {
+        listaComponentes.querySelectorAll("[data-comp-idx]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const idx = Number(btn.dataset.compIdx);
+                if (btn.dataset.compAccion === "eliminar") eliminarComponente(idx);
+                else editarComponente(idx);
+            });
+        });
+    }
+    actualizarBotonComponente();
+}
+
+function actualizarBotonComponente() {
+    if (btnAgregarComponente) {
+        btnAgregarComponente.textContent =
+            editandoComponenteIdx !== null ? "Guardar cambios del componente" : "Agregar Componente";
+    }
+    if (btnCancelarEdicionComponenteCalc) {
+        btnCancelarEdicionComponenteCalc.style.display = editandoComponenteIdx !== null ? "" : "none";
+    }
+}
+
+function cancelarEdicionComponente() {
+    editandoComponenteIdx = null;
+    ["cantidadComprada", "precioCompra", "cantidadUtilizada"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
+    actualizarBotonComponente();
+}
+
+function editarComponente(idx) {
+    const comp = estado.componentes[idx];
+    if (!comp) return;
+
+    editandoComponenteIdx = idx;
+    if (tipoComponente) {
+        tipoComponente.value = comp.tipo;
+        mostrarComponente(datosComponentes, tipoComponente);
+    }
+    ["cantidadComprada", "precioCompra", "cantidadUtilizada"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = comp[id];
+    });
+    actualizarBotonComponente();
+
+    const primero = document.getElementById("cantidadComprada");
+    if (primero) {
+        primero.scrollIntoView({ behavior: "smooth", block: "center" });
+        primero.focus();
+    }
+}
+
+async function eliminarComponente(idx) {
+    const comp = estado.componentes[idx];
+    if (!comp) return;
+
+    const ok = await confirmar(`¿Quitar "${comp.tipo}" de la lista de componentes?`, { titulo: "Quitar componente" });
+    if (!ok) return;
+
+    estado.componentes.splice(idx, 1);
+
+    if (editandoComponenteIdx === idx) {
+        cancelarEdicionComponente();
+    } else if (editandoComponenteIdx !== null && editandoComponenteIdx > idx) {
+        editandoComponenteIdx -= 1;
+    }
+
+    pintarComponentes();
+}
+
+async function agregarComponente() {
     const tipo = tipoComponente ? tipoComponente.value : "";
     const cantidadComprada = Number(valor("cantidadComprada"));
     const precioCompra = Number(valor("precioCompra"));
     const cantidadUtilizada = Number(valor("cantidadUtilizada"));
 
     if (!tipo) {
-        alert("Seleccioná un tipo de componente.");
+        await mostrarAviso("Seleccioná un tipo de componente.");
         return;
     }
     if (valor("cantidadComprada") === "" || !Number.isInteger(cantidadComprada) || cantidadComprada <= 0) {
-        alert("La cantidad comprada debe ser un número entero mayor a 0.");
+        await mostrarAviso("La cantidad comprada debe ser un número entero mayor a 0.", { titulo: "Revisá el dato" });
         return;
     }
     if (valor("precioCompra") === "" || !Number.isFinite(precioCompra) || precioCompra < 0) {
-        alert("El precio de compra no puede ser negativo.");
+        await mostrarAviso("El precio de compra no puede ser negativo.", { titulo: "Revisá el dato" });
         return;
     }
     if (valor("cantidadUtilizada") === "" || !Number.isInteger(cantidadUtilizada) || cantidadUtilizada < 0) {
-        alert("La cantidad utilizada debe ser un número entero (0 o más).");
+        await mostrarAviso("La cantidad utilizada debe ser un número entero (0 o más).", { titulo: "Revisá el dato" });
         return;
     }
-    if (cantidadUtilizada > cantidadComprada && !confirm("La cantidad usada es mayor a la comprada. ¿Continuar?"))
+    if (
+        cantidadUtilizada > cantidadComprada &&
+        !(await confirmar("La cantidad usada es mayor a la comprada. ¿Continuar?", {
+            titulo: "Cantidad fuera de rango",
+        }))
+    ) {
         return;
+    }
 
-    estado.componentes.push({ tipo, cantidadComprada, precioCompra, cantidadUtilizada });
+    const nuevo = { tipo, cantidadComprada, precioCompra, cantidadUtilizada };
 
-    document.getElementById("cantidadComprada").value = "";
-    document.getElementById("precioCompra").value = "";
-    document.getElementById("cantidadUtilizada").value = "";
+    if (editandoComponenteIdx !== null) {
+        if (estado.componentes[editandoComponenteIdx]) estado.componentes[editandoComponenteIdx] = nuevo;
+        cancelarEdicionComponente();
+    } else {
+        estado.componentes.push(nuevo);
+        ["cantidadComprada", "precioCompra", "cantidadUtilizada"].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
+    }
 
-    mostrarListaComponentes(estado.componentes, listaComponentes);
+    pintarComponentes();
 }
 
 // ---------------------------------------------------------------------------
@@ -203,7 +298,7 @@ function mostrarErroresCalculadora(errores) {
     cont.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
-function calcularTodo() {
+async function calcularTodo() {
     const errores = validarCalculadora();
     mostrarErroresCalculadora(errores);
     if (errores.length) {
@@ -233,14 +328,14 @@ function calcularTodo() {
     }
 
     mostrarDesgloseComponentes(estado.componentes, document.getElementById("desgloseComponentes"));
-    mostrarListaComponentes(estado.componentes, listaComponentes);
+    pintarComponentes();
 
     if (resultados) {
         resultados.style.display = "block";
         resultados.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
-    aplicarDescuentoInventario();
+    await aplicarDescuentoInventario();
 }
 
 function limpiarTodo() {
@@ -272,7 +367,8 @@ function limpiarTodo() {
     aplicarValorHoraPorDefecto();
 
     estado.componentes.length = 0;
-    mostrarListaComponentes(estado.componentes, listaComponentes);
+    editandoComponenteIdx = null;
+    pintarComponentes();
 
     firmaDescontada = null;
 
@@ -306,7 +402,7 @@ function firmaCalculo() {
  * Si no hay material coincidente: calcula pero no actualiza el inventario.
  * Si el mismo cálculo ya se descontó, no lo vuelve a hacer.
  */
-function aplicarDescuentoInventario() {
+async function aplicarDescuentoInventario() {
     const aviso = document.getElementById("avisoStock");
 
     const firma = firmaCalculo();
@@ -356,7 +452,7 @@ function aplicarDescuentoInventario() {
     if (gramosRelleno > 0) detalle.push(`• Relleno: ${gramosRelleno} g`);
     if (componentesDescontados > 0) detalle.push(`• Componentes: ${componentesDescontados} ud.`);
 
-    if (!confirm("¿Descontar del inventario?\n\n" + detalle.join("\n"))) {
+    if (!(await confirmar("¿Descontar del inventario?\n\n" + detalle.join("\n"), { titulo: "Confirmar descuento" }))) {
         if (aviso) aviso.textContent = "ℹ️ No se descontó stock (cancelado).";
         return;
     }
@@ -365,9 +461,24 @@ function aplicarDescuentoInventario() {
     const guardado = guardarInventario(estado.inventario);
     renderInventario();
     if (aviso) {
-        aviso.textContent = guardado
+        let mensaje = guardado
             ? "✔️ Stock descontado del inventario → " + detalle.map((d) => d.replace("• ", "")).join(" · ")
             : "⚠️ Stock descontado, pero no se pudo guardar en el dispositivo. Exportá un backup.";
+
+        // Avisamos lo que no alcanzó en el stock.
+        const faltantes = [];
+        const difLana = Number((num("gramosUsados") - gramosLana).toFixed(3));
+        const difRelleno = Number((num("rellenoUsado") - gramosRelleno).toFixed(3));
+        const pedidos = estado.componentes.reduce((suma, c) => suma + (c.cantidadUtilizada || 0), 0);
+        const difComp = pedidos - componentesDescontados;
+
+        if (difLana > 0.001) faltantes.push(`Lana: faltaban ${difLana} g`);
+        if (difRelleno > 0.001) faltantes.push(`Relleno: faltaban ${difRelleno} g`);
+        if (difComp > 0) faltantes.push(`Componentes: faltaban ${difComp} ud.`);
+
+        if (faltantes.length) mensaje += " · ⚠️ Stock insuficiente → " + faltantes.join(", ");
+
+        aviso.textContent = mensaje;
     }
     firmaDescontada = firma;
 }
@@ -377,7 +488,7 @@ function aplicarDescuentoInventario() {
 // ---------------------------------------------------------------------------
 const btnGuardarDesdeCalculadora = document.getElementById("btnGuardarDesdeCalculadora");
 if (btnGuardarDesdeCalculadora) {
-    btnGuardarDesdeCalculadora.addEventListener("click", () => {
+    btnGuardarDesdeCalculadora.addEventListener("click", async () => {
         const seleccionado = obtenerProyectoSeleccionado();
         let nombre;
 
@@ -386,7 +497,9 @@ if (btnGuardarDesdeCalculadora) {
         } else {
             nombre = texto("nombreProyectoCalc");
             if (!nombre) {
-                alert("Escribe un nombre para el proyecto");
+                await mostrarAviso("Escribí un nombre para el proyecto antes de guardarlo.", {
+                    titulo: "Falta el nombre",
+                });
                 return;
             }
         }
@@ -401,7 +514,7 @@ if (btnGuardarDesdeCalculadora) {
             guardarProyectos(estado.proyectos);
             renderProyectos();
             renderBannerProyecto();
-            alert(`Cálculo guardado en "${seleccionado.nombre}"`);
+            await mostrarAviso(`Cálculo guardado en "${seleccionado.nombre}".`, { titulo: "Proyecto actualizado" });
         } else {
             const nuevo = crearProyecto(nombre, "amigurumi", "");
             nuevo.costo = costo;
@@ -411,7 +524,7 @@ if (btnGuardarDesdeCalculadora) {
             guardarProyectos(estado.proyectos);
             renderProyectos();
             document.getElementById("nombreProyectoCalc").value = "";
-            alert("Proyecto guardado correctamente");
+            await mostrarAviso("Proyecto guardado correctamente.", { titulo: "Guardado" });
         }
     });
 }
