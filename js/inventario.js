@@ -14,7 +14,9 @@ function generarId() {
 }
 
 function normalizarTexto(valor) {
-    return String(valor == null ? "" : valor).trim().toLowerCase();
+    return String(valor == null ? "" : valor)
+        .trim()
+        .toLowerCase();
 }
 
 /**

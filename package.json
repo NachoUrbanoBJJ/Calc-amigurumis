@@ -1,15 +1,25 @@
 {
-  "name": "calculadora-amigurumis",
-  "version": "0.1.0",
-  "description": "Calculadora de costos para amigurumis (lana, relleno, componentes y mano de obra).",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "devDependencies": {
-    "vite": "^7.0.0"
-  }
+    "name": "calculadora-amigurumis",
+    "version": "0.1.0",
+    "description": "Calculadora de costos para amigurumis (lana, relleno, componentes y mano de obra).",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "test": "node --test",
+        "icons": "node scripts/generate-icons.mjs",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write \"js/**/*.js\" \"css/**/*.css\" \"tests/**/*.js\" \"scripts/**/*.mjs\" \"public/**/*.js\" \"*.md\" \"*.json\"",
+        "format:check": "prettier --check \"js/**/*.js\" \"css/**/*.css\" \"tests/**/*.js\" \"scripts/**/*.mjs\" \"public/**/*.js\" \"*.md\" \"*.json\""
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.13.0",
+        "globals": "^17.13.0",
+        "prettier": "^3.9.10",
+        "vite": "^7.0.0"
+    }
 }

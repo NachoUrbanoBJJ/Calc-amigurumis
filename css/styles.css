@@ -1,10 +1,10 @@
 body {
-    background-color: #FFC5D3;
+    background-color: #ffc5d3;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 20px;
-    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif;
 }
 h1 {
     text-align: center;
@@ -29,7 +29,8 @@ input {
     box-sizing: border-box;
     font-family: inherit;
 }
-input, select {
+input,
+select {
     width: 100%;
     padding: 10px;
     margin: 5px 0;
@@ -43,7 +44,7 @@ label {
     margin-bottom: 5px;
     margin-top: 10px;
     font-weight: bold;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: "Courier New", Courier, monospace;
 }
 button {
     background-color: #ff5c8a;
@@ -589,7 +590,7 @@ textarea {
 .badge-codigo {
     background-color: #e0e7ff;
     color: #3730a3;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: "Courier New", Courier, monospace;
 }
 
 /* Precio de venta (calculadora) */
@@ -693,4 +694,3 @@ textarea {
         font-size: 14px;
     }
 }
-

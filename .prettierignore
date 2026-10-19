@@ -1,0 +1,6 @@
+dist
+node_modules
+package-lock.json
+coverage
+# No formateamos el HTML a mano: es sensible a espacios en el layout.
+index.html

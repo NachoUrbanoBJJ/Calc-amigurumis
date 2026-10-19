@@ -6,15 +6,17 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 ---
 
 ## Bloque 0 — Orden del proyecto (base) ✅
+
 - ✅ Estructura de carpetas (`css/`, `js/`, `assets/`)
 - ✅ Repositorio **Git** (local)
-- ✅ **`package.json`** + **Vite** (preparado)
+- ✅ **`package.json`** + **Vite**
 - ✅ `README.md` con instrucciones
 - ✅ `ROADMAP.md`
 - ✅ Repositorio remoto en **GitHub** (`NachoUrbanoBJJ/Calc-amigurumis`, rama `main`)
-- ✅ Separar el JS en módulos por sección
+- ✅ JS separado en módulos por sección
 
 ## Bloque 1 — Lógica de la calculadora 🔴 prioridad ✅
+
 - ✅ Captura de Lanas, Relleno, Componentes, Mano de Obra
 - ✅ Cálculo de costo de lana, relleno y mano de obra
 - ✅ Mostrar los resultados en pantalla
@@ -22,51 +24,65 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ Lista visible de componentes agregados
 - ✅ Botón "Calcular" único
 - ✅ Validaciones (campos vacíos, negativos, división por cero)
-- ✅ Separar el JS en módulos por sección
+- ✅ Errores inline (`#erroresCalculadora`)
 
 ## Bloque 2 — Funciones de la app (features) 🔄
-- ⬜ Precio de venta final + margen de ganancia (%)
+
+- ✅ Precio de venta final + margen de ganancia (%)
 - ✅ Guardar varias recetas/proyectos
 - ✅ Historial de amigurumis calculados
 - ⬜ Categorías de componentes editables por el usuario
 - ⬜ Duplicar un proyecto
 - ✅ Notas por proyecto
-- ✅ **Gestor de patrones de costura / amigurumi**
+- ✅ **Gestor de patrones de amigurumi** (código `PAT-000x`, materiales estructurados, búsqueda, chips por categoría)
 - ✅ **Inventario de materiales (lanas, relleno, componentes)**
-- ✅ **Planificador de trabajos (crear proyecto + secciones: puntos/vueltas/altura/notas)**
-- ⬜ **Descontar stock al planificar/guardar un trabajo**
+- ✅ **Planificador de trabajos (proyecto + secciones: puntos/vueltas/altura/notas)**
+- ✅ **Descontar stock al calcular (con confirmación)**
 - ⬜ **Alertas de stock bajo / sin stock**
-- ✅ **Menú de navegación (Calculadora / Inventario / Guardado)**
+- ✅ **Menú de navegación (Calculadora / Inventario / Planificador / Patrones / Backup)**
 - ✅ **Exportar/Importar Backup JSON (global)**
 - ✅ **Exportar/Importar Inventario JSON**
+- ✅ **Crear proyecto a partir de un patrón**
 - ⬜ Futuro: exportar a PDF / imagen / Excel
 
-## Bloque 3 — Datos y persistencia
-- ⬜ Guardar en el dispositivo (localStorage)
-- ⬜ Datos por defecto (categorías, valores)
-- ⬜ Exportar/Importar backup (JSON)
-- ⬜ **Base de datos local unificada (proyectos + inventario + patrones)**
-- ⬜ **Sincronización de stock entre proyectos e inventario**
+## Bloque 3 — Datos y persistencia ✅
+
+- ✅ Guardar en el dispositivo (localStorage)
+- ✅ Datos por defecto (config: último valor por hora)
+- ✅ Exportar/Importar backup (JSON)
+- ✅ **Base de datos local unificada (proyectos + inventario + patrones)**
+- ✅ **Sincronización de stock entre proyectos e inventario**
 - ⬜ Futuro: sincronización en la nube
 
-## Bloque 4 — Diseño y experiencia (UI/UX)
+## Bloque 4 — Diseño y experiencia (UI/UX) 🔄
+
 - ✅ Paleta rosa/blanco y tarjetas
 - ✅ Responsive real (tarjetas con max-width + flex/grid)
-- ✅ Diseño mobile-first (media queries añadidas)
+- ✅ Diseño mobile-first (media queries)
 - ⬜ Ajustes de tipografía y espaciado
-- ⬜ Feedback visual (errores inline, confirmaciones mejoradas, animaciones)
+- ✅ Feedback visual (errores inline, confirmaciones, avisos)
 - ✅ Botones/inputs cómodos para uso táctil
 - ⬜ Futuro: modo oscuro
 
-## Bloque 5 — PWA (PC + Android desde navegador)
-- ⬜ manifest.json
-- ⬜ Íconos (192px y 512px) + splash screen
-- ⬜ Service Worker (offline)
-- ⬜ Instalable en PC y Android
-- ⬜ Meta tags correctos (título, theme-color)
+## Bloque 5 — PWA (PC + Android desde navegador) ✅
+
+- ✅ `manifest.webmanifest`
+- ✅ Íconos (192px, 512px, maskable y SVG)
+- ✅ Service Worker (offline, cache-first con revalidación)
+- ✅ Instalable en PC y Android
+- ✅ Meta tags correctos (título, theme-color, apple-touch-icon)
+
+## Bloque C — Prolijidad de código ✅
+
+- ✅ `scripts.js` dividido en módulos por sección (`utils`, `estado`, `calculadora`,
+  `inventario-ui`, `planificador-ui`, `patrones-ui`, `backup`, `render`, `pwa`)
+- ✅ **ESLint** (flat config) + **Prettier** configurados
+- ✅ **Tests unitarios** de la lógica pura (`npm test`, runner nativo de Node)
+- ✅ `package-lock.json` versionado
+- ✅ README y ROADMAP actualizados
 
 ## Bloque 6 — App Android nativa (Capacitor) 📱
-- ⬜ Instalar Node.js
+
 - ⬜ Instalar Android Studio + JDK
 - ⬜ Agregar Capacitor al proyecto
 - ⬜ Generar proyecto Android
@@ -76,6 +92,7 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ⬜ Probar en el celular
 
 ## Bloque 7 — Publicación en Play Store (opcional)
+
 - ⬜ Cuenta Google Play Developer ($25 único)
 - ⬜ Política de privacidad (URL pública)
 - ⬜ Ficha de tienda (descripción, capturas, gráfico)
@@ -84,6 +101,7 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ⬜ Solicitar producción y publicar
 
 ## Bloque 8 — Expansión
+
 - ⬜ Versión iOS
 - ⬜ Versión de escritorio (Windows)
 - ⬜ Compartir cálculos por WhatsApp
@@ -96,8 +114,10 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 ## Orden sugerido de ejecución
 
 ```
-Bloque 0 → Bloque 1 → Bloque 4 (responsive) → Bloque 3 → Bloque 5 → Bloque 6 → Bloque 2 (extras + Inventario + Patrones) → Bloque 7
+Bloque 0 → Bloque 1 → Bloque 4 (responsive) → Bloque 3 → Bloque 5 (PWA) →
+Bloque C (prolijidad) → Bloque 2 (extras) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
 ```
 
 Primero que funcione (0–1), después que se vea bien (4), que no pierda datos (3),
-que sea instalable (5–6), y luego features (2) y tienda (7).
+que sea instalable (5), que el código esté prolijo (C), y luego features (2),
+nativo (6) y tienda (7).

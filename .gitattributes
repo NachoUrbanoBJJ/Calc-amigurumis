@@ -1,0 +1,15 @@
+# Normaliza los finales de línea a LF dentro del repositorio,
+# así no hay ruido al pasar de Windows a Linux/macOS.
+* text=auto eol=lf
+
+# Archivos binarios: no convertir
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

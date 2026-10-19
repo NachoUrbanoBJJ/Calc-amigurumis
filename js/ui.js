@@ -1,3 +1,5 @@
+import { escapeHtml } from "./utils.js";
+
 export function mostrarComponente(datosComponentes, tipoComponente) {
     if (!datosComponentes || !tipoComponente) return;
 
@@ -32,10 +34,10 @@ export function mostrarListaComponentes(componentes, elemento) {
         const costoFormateado = isNaN(costo) || !isFinite(costo) ? formatearMoneda(0) : formatearMoneda(costo);
         html += `
             <div class="componente-item">
-                <div class="comp-header">${index + 1}. ${comp.tipo || "Sin tipo"}</div>
+                <div class="comp-header">${index + 1}. ${escapeHtml(comp.tipo || "Sin tipo")}</div>
                 <div class="comp-details">
-                    Comprado: ${comp.cantidadComprada} ud. | Precio compra: ${formatearMoneda(comp.precioCompra)} | 
-                    Usado: ${comp.cantidadUtilizada} ud. | Costo: ${costoFormateado}
+                    Comprado: ${escapeHtml(comp.cantidadComprada)} ud. | Precio compra: ${formatearMoneda(comp.precioCompra)} | 
+                    Usado: ${escapeHtml(comp.cantidadUtilizada)} ud. | Costo: ${costoFormateado}
                 </div>
             </div>
         `;
@@ -52,14 +54,14 @@ export function mostrarDesgloseComponentes(componentes, elemento) {
     }
 
     let html = "";
-    componentes.forEach((comp, index) => {
+    componentes.forEach((comp) => {
         const costo = (comp.precioCompra / comp.cantidadComprada) * comp.cantidadUtilizada;
         const costoFormateado = isNaN(costo) || !isFinite(costo) ? formatearMoneda(0) : formatearMoneda(costo);
         html += `
             <div class="componente-item">
-                <div class="comp-header">${comp.tipo || "Sin tipo"}</div>
+                <div class="comp-header">${escapeHtml(comp.tipo || "Sin tipo")}</div>
                 <div class="comp-details">
-                    Cantidad usada: ${comp.cantidadUtilizada} ud. | Costo atribuible: ${costoFormateado}
+                    Cantidad usada: ${escapeHtml(comp.cantidadUtilizada)} ud. | Costo atribuible: ${costoFormateado}
                 </div>
             </div>
         `;

@@ -1,9 +1,5 @@
 export function calcularLana(precioOvillo, gramosOvillo, gramosUsados) {
-    if (
-        precioOvillo <= 0 ||
-        gramosOvillo <= 0 ||
-        gramosUsados < 0
-    ) {
+    if (precioOvillo <= 0 || gramosOvillo <= 0 || gramosUsados < 0) {
         return 0;
     }
 
@@ -12,11 +8,7 @@ export function calcularLana(precioOvillo, gramosOvillo, gramosUsados) {
 }
 
 export function calcularRelleno(precioRelleno, gramosRelleno, rellenoUsado) {
-    if (
-        precioRelleno <= 0 ||
-        gramosRelleno <= 0 ||
-        rellenoUsado < 0
-    ) {
+    if (precioRelleno <= 0 || gramosRelleno <= 0 || rellenoUsado < 0) {
         return 0;
     }
 
@@ -34,11 +26,7 @@ export function calcularManoObra(horasTrabajadas, valorHora) {
 }
 
 export function calcularComponente(cantidadComprada, precioCompra, cantidadUtilizada) {
-    if (
-        cantidadComprada <= 0 ||
-        precioCompra < 0 ||
-        cantidadUtilizada < 0
-    ) {
+    if (cantidadComprada <= 0 || precioCompra < 0 || cantidadUtilizada < 0) {
         return 0;
     }
 
@@ -48,11 +36,7 @@ export function calcularComponente(cantidadComprada, precioCompra, cantidadUtili
 
 export function calcularTotalComponentes(componentes) {
     return componentes.reduce((total, comp) => {
-        const costo = calcularComponente(
-            comp.cantidadComprada,
-            comp.precioCompra,
-            comp.cantidadUtilizada
-        );
+        const costo = calcularComponente(comp.cantidadComprada, comp.precioCompra, comp.cantidadUtilizada);
         return total + costo;
     }, 0);
 }
