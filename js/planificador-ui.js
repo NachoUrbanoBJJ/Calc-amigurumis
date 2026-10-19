@@ -1,5 +1,5 @@
 import { estado } from "./estado.js";
-import { escapeHtml, texto, irASeccion } from "./utils.js";
+import { escapeHtml, texto, irASeccion, formatearFecha } from "./utils.js";
 import { formatearMoneda } from "./ui.js";
 import { crearProyecto, guardarProyectos, agregarSeccion, eliminarSeccion } from "./planificador.js";
 
@@ -240,12 +240,13 @@ export function renderProyectoActivo() {
     if (!lista) return;
     lista.innerHTML = "";
 
-    if (!estado.proyectoActivo.secciones.length) {
+    const secciones = Array.isArray(estado.proyectoActivo.secciones) ? estado.proyectoActivo.secciones : [];
+    if (!secciones.length) {
         lista.innerHTML = "<p class='empty-state'>Sin secciones añadidas</p>";
         return;
     }
 
-    estado.proyectoActivo.secciones.forEach((s) => {
+    secciones.forEach((s) => {
         const div = document.createElement("div");
         div.className = "seccion-card";
         div.innerHTML = `<div class="seccion-header"><span class="seccion-title">${escapeHtml(s.nombre)}</span><div class="item-actions"><button class="btn-danger" data-del-seccion="${s.id}">Eliminar</button></div></div><div class="seccion-details"><span><strong>Puntos:</strong> ${escapeHtml(s.puntos)}</span><span><strong>Vueltas/Filas:</strong> ${escapeHtml(s.vueltas)}</span><span><strong>Altura:</strong> ${escapeHtml(s.altura)}cm</span></div>${s.notas ? `<div class="seccion-notas">${escapeHtml(s.notas)}</div>` : ""}`;
@@ -263,7 +264,7 @@ export function renderProyectoActivo() {
 }
 
 function renderDetalleProyecto(p) {
-    const costo = p.costo;
+    const costo = p.costo || {};
     let html = `<div class="detalle-proyecto">`;
 
     html += `<h4>Coste</h4><div class="item-details">
@@ -286,7 +287,7 @@ function renderDetalleProyecto(p) {
         html += `<p class="info-text">📄 Patrón de origen: ${escapeHtml(p.patronOrigen.codigo)} — ${escapeHtml(p.patronOrigen.nombre)}</p>`;
     }
 
-    const mat = p.materialesUsados;
+    const mat = p.materialesUsados || {};
     const lineas = [];
     if (mat.lana && (mat.lana.color || mat.lana.marca || mat.lana.gramosUsados)) {
         lineas.push(`Lana: ${mat.lana.color || "-"} ${mat.lana.marca || ""} (${mat.lana.gramosUsados || 0} g)`);
@@ -303,9 +304,10 @@ function renderDetalleProyecto(p) {
         html += `<h4>Materiales usados</h4><div class="seccion-notas">${escapeHtml(lineas.join("\n"))}</div>`;
     }
 
-    if (p.secciones.length) {
+    const secciones = Array.isArray(p.secciones) ? p.secciones : [];
+    if (secciones.length) {
         html += `<h4>Secciones</h4>`;
-        p.secciones.forEach((s) => {
+        secciones.forEach((s) => {
             html += `<div class="seccion-card"><div class="seccion-header"><span class="seccion-title">${escapeHtml(s.nombre)}</span></div><div class="seccion-details"><span><strong>Puntos:</strong> ${escapeHtml(s.puntos)}</span><span><strong>Vueltas:</strong> ${escapeHtml(s.vueltas)}</span><span><strong>Altura:</strong> ${escapeHtml(s.altura)} cm</span></div>${s.notas ? `<div class="seccion-notas">${escapeHtml(s.notas)}</div>` : ""}</div>`;
         });
     } else {
@@ -346,8 +348,8 @@ export function renderProyectos() {
             </div>
             <div class="item-details">
                 <span>Coste total: ${formatearMoneda(p.costo.total)}</span>
-                <span>Secciones: ${p.secciones.length}</span>
-                <span>Modificado: ${new Date(p.fechaModificacion).toLocaleString("es-AR")}</span>
+                <span>Secciones: ${(p.secciones || []).length}</span>
+                <span>Modificado: ${formatearFecha(p.fechaModificacion)}</span>
             </div>
             <div class="item-actions">
                 <button type="button" data-revisar="${p.id}">${abierto ? "Ocultar" : "Revisar"}</button>

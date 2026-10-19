@@ -14,8 +14,28 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Amigurumis">
+    <script>
+        // Manejador temprano de errores: si algo falla (incluso al cargar los
+        // módulos), se avisa al usuario en vez de dejar la pantalla congelada.
+        (function () {
+            function mostrarAviso(mensaje) {
+                var aviso = document.getElementById("avisoGlobal");
+                if (!aviso) return;
+                aviso.textContent = mensaje;
+                aviso.className = "aviso-global aviso-error";
+                aviso.style.display = "block";
+            }
+            window.addEventListener("error", function (evento) {
+                mostrarAviso("Ocurrió un error inesperado. Recargá la página. (" + (evento.message || "desconocido") + ")");
+            });
+            window.addEventListener("unhandledrejection", function () {
+                mostrarAviso("Ocurrió un error inesperado. Recargá la página.");
+            });
+        })();
+    </script>
 </head>
 <body>
+    <div id="avisoGlobal" class="aviso-global" style="display:none;"></div>
     <header class="header">
         <h1>Calculadora de Amigurumis</h1>
         <nav class="nav">

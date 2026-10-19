@@ -1,5 +1,6 @@
 import { cargarProyectos, cargarPatrones } from "./planificador.js";
 import { cargarInventario } from "./inventario.js";
+import { leerJson, guardarJson, storageDisponible } from "./almacenamiento.js";
 
 // ---------------------------------------------------------------------------
 // Estado en memoria compartido por toda la app.
@@ -33,20 +34,19 @@ export const estado = {
 // ---------------------------------------------------------------------------
 const STORAGE_KEY_CONFIG = "calc-amigurumis-config-v1";
 
+/**
+ * Indica si el navegador pudo inicializar el estado persistente.
+ * Si es false, conviene avisar que los datos no se guardarán.
+ */
+export const almacenamientoOk = storageDisponible();
+
 export function cargarConfig() {
-    try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY_CONFIG) || "{}") || {};
-    } catch {
-        return {};
-    }
+    const config = leerJson(STORAGE_KEY_CONFIG, {});
+    return config && typeof config === "object" ? config : {};
 }
 
 export function guardarConfig(config) {
-    try {
-        localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
-    } catch (e) {
-        console.warn("No se pudo guardar la configuración", e);
-    }
+    return guardarJson(STORAGE_KEY_CONFIG, config);
 }
 
 /**

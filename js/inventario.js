@@ -1,3 +1,6 @@
+import { leerJson, guardarJson } from "./almacenamiento.js";
+import { esObjeto } from "./utils.js";
+
 const STORAGE_KEY_INVENTARIO = "calc-amigurumis-inventario-v1";
 
 export const inventarioVacio = {
@@ -13,7 +16,7 @@ function generarId() {
     return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
 }
 
-function normalizarTexto(valor) {
+export function normalizarTexto(valor) {
     return String(valor == null ? "" : valor)
         .trim()
         .toLowerCase();
@@ -21,37 +24,36 @@ function normalizarTexto(valor) {
 
 /**
  * Compara dos textos de forma tolerante: iguales o uno contenido en el otro.
- * Sirve para que "ojos" coincida con "Ojos de seguridad 12mm".
+ * Sirve para que "ojos" coincida con "Ojos de seguridad 12mm" y para que la
+ * disponibilidad de un patrón use el mismo criterio que el descuento de stock.
  */
-function coincideTexto(a, b) {
+export function coincideTexto(a, b) {
     const na = normalizarTexto(a);
     const nb = normalizarTexto(b);
     if (!na || !nb) return false;
     return na === nb || na.includes(nb) || nb.includes(na);
 }
 
+/**
+ * Deja cualquier estructura de inventario (localStorage o backup) con la forma
+ * actual, descartando elementos que no sean objetos.
+ */
+export function normalizarInventario(data) {
+    const base = esObjeto(data) ? data : {};
+    return {
+        lanas: Array.isArray(base.lanas) ? base.lanas.filter(esObjeto) : [],
+        rellenos: Array.isArray(base.rellenos) ? base.rellenos.filter(esObjeto) : [],
+        componentes: Array.isArray(base.componentes) ? base.componentes.filter(esObjeto) : [],
+    };
+}
+
 export function cargarInventario() {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY_INVENTARIO);
-        if (!raw) return JSON.parse(JSON.stringify(inventarioVacio));
-        const data = JSON.parse(raw);
-        return {
-            lanas: Array.isArray(data.lanas) ? data.lanas : [],
-            rellenos: Array.isArray(data.rellenos) ? data.rellenos : [],
-            componentes: Array.isArray(data.componentes) ? data.componentes : [],
-        };
-    } catch (error) {
-        console.error("Error al cargar inventario", error);
-        return JSON.parse(JSON.stringify(inventarioVacio));
-    }
+    const data = leerJson(STORAGE_KEY_INVENTARIO, null);
+    return normalizarInventario(data);
 }
 
 export function guardarInventario(inventario) {
-    try {
-        localStorage.setItem(STORAGE_KEY_INVENTARIO, JSON.stringify(inventario));
-    } catch (error) {
-        console.error("Error al guardar inventario", error);
-    }
+    return guardarJson(STORAGE_KEY_INVENTARIO, inventario);
 }
 
 export function agregarLanaInventario(inventario, lana) {
@@ -92,44 +94,61 @@ export function agregarComponenteInventario(inventario, componente) {
     return inventario;
 }
 
-export function descontarLana(inventario, { color, marca, gramosUsados }) {
+/**
+ * Descuenta gramos de lana del inventario.
+ * Coincidencia tolerante por color y marca (igual criterio que la
+ * disponibilidad de materiales de los patrones).
+ */
+export function descontarLana(inventario, { color, marca, gramosUsados } = {}) {
+    const lanas = Array.isArray(inventario && inventario.lanas) ? inventario.lanas : [];
     if (!gramosUsados || gramosUsados <= 0) return { descontado: 0, actualizado: false };
+
     let restante = gramosUsados;
-    for (let i = 0; i < inventario.lanas.length && restante > 0; i++) {
-        const l = inventario.lanas[i];
-        if (l.gramosDisponibles <= 0) continue;
-        if (color && normalizarTexto(l.color) !== normalizarTexto(color)) continue;
-        if (marca && normalizarTexto(l.marca) !== normalizarTexto(marca)) continue;
+    for (let i = 0; i < lanas.length && restante > 0; i++) {
+        const l = lanas[i];
+        if (!l || !(l.gramosDisponibles > 0)) continue;
+        if (color && !coincideTexto(color, l.color)) continue;
+        if (marca && !coincideTexto(marca, l.marca)) continue;
         const descontar = Math.min(restante, l.gramosDisponibles);
         l.gramosDisponibles = Number((l.gramosDisponibles - descontar).toFixed(3));
         restante = Number((restante - descontar).toFixed(3));
     }
-    return { descontado: Number((gramosUsados - restante).toFixed(3)), actualizado: gramosUsados - restante > 0 };
+
+    const descontado = Number((gramosUsados - restante).toFixed(3));
+    return { descontado, actualizado: descontado > 0 };
 }
 
-export function descontarRelleno(inventario, { tipo, marca, gramosUsados }) {
+/**
+ * Descuenta gramos de relleno del inventario (coincidencia tolerante).
+ */
+export function descontarRelleno(inventario, { tipo, marca, gramosUsados } = {}) {
+    const rellenos = Array.isArray(inventario && inventario.rellenos) ? inventario.rellenos : [];
     if (!gramosUsados || gramosUsados <= 0) return { descontado: 0, actualizado: false };
+
     let restante = gramosUsados;
-    for (let i = 0; i < inventario.rellenos.length && restante > 0; i++) {
-        const r = inventario.rellenos[i];
-        if (r.gramosDisponibles <= 0) continue;
-        if (tipo && normalizarTexto(r.tipo) !== normalizarTexto(tipo)) continue;
-        if (marca && normalizarTexto(r.marca) !== normalizarTexto(marca)) continue;
+    for (let i = 0; i < rellenos.length && restante > 0; i++) {
+        const r = rellenos[i];
+        if (!r || !(r.gramosDisponibles > 0)) continue;
+        if (tipo && !coincideTexto(tipo, r.tipo)) continue;
+        if (marca && !coincideTexto(marca, r.marca)) continue;
         const descontar = Math.min(restante, r.gramosDisponibles);
         r.gramosDisponibles = Number((r.gramosDisponibles - descontar).toFixed(3));
         restante = Number((restante - descontar).toFixed(3));
     }
-    return { descontado: Number((gramosUsados - restante).toFixed(3)), actualizado: gramosUsados - restante > 0 };
+
+    const descontado = Number((gramosUsados - restante).toFixed(3));
+    return { descontado, actualizado: descontado > 0 };
 }
 
 export function descontarComponentes(inventario, componentesUsados = []) {
+    const componentes = Array.isArray(inventario && inventario.componentes) ? inventario.componentes : [];
     let actualizado = false;
     componentesUsados.forEach((cu) => {
-        if (!cu.cantidadUtilizada || cu.cantidadUtilizada <= 0) return;
+        if (!cu || !cu.cantidadUtilizada || cu.cantidadUtilizada <= 0) return;
         let restante = cu.cantidadUtilizada;
-        for (let i = 0; i < inventario.componentes.length && restante > 0; i++) {
-            const c = inventario.componentes[i];
-            if (c.cantidadDisponible <= 0) continue;
+        for (let i = 0; i < componentes.length && restante > 0; i++) {
+            const c = componentes[i];
+            if (!c || !(c.cantidadDisponible > 0)) continue;
             // Coincidencia tolerante: "ojos" matchea con "Ojos de seguridad 12mm"
             if (cu.tipo && !coincideTexto(cu.tipo, c.tipo)) continue;
             const descontar = Math.min(restante, c.cantidadDisponible);

@@ -1,5 +1,6 @@
 import { estado } from "./estado.js";
-import { escapeHtml, texto, normalizar, limpiarCampos, irASeccion } from "./utils.js";
+import { escapeHtml, texto, normalizar, limpiarCampos, irASeccion, formatearFecha } from "./utils.js";
+import { coincideTexto } from "./inventario.js";
 import {
     generarId,
     agregarPatron,
@@ -109,10 +110,7 @@ function calcularDisponibilidadMaterial(mat) {
     const n = normalizar(mat.nombre);
     if (!n) return { estado: "sin-datos", disponible: 0 };
 
-    const coincide = (t) => {
-        const nt = normalizar(t);
-        return !!nt && (nt.includes(n) || n.includes(nt));
-    };
+    const coincide = (t) => coincideTexto(mat.nombre, t) && !!normalizar(t);
 
     const unidad = normalizar(mat.unidad);
     const esPeso = ["g", "gr", "grs", "gramo", "gramos", "kg"].includes(unidad);
@@ -121,14 +119,16 @@ function calcularDisponibilidadMaterial(mat) {
     let disponible = 0;
     let hallado = false;
 
+    const inventario = estado.inventario || { lanas: [], rellenos: [], componentes: [] };
+
     if (esPeso || esUnidad) {
-        estado.inventario.lanas.forEach((l) => {
+        (inventario.lanas || []).forEach((l) => {
             if (coincide(l.color) || coincide(l.marca)) {
                 disponible += Number(l.gramosDisponibles) || 0;
                 hallado = true;
             }
         });
-        estado.inventario.rellenos.forEach((r) => {
+        (inventario.rellenos || []).forEach((r) => {
             if (coincide(r.tipo) || coincide(r.marca)) {
                 disponible += Number(r.gramosDisponibles) || 0;
                 hallado = true;
@@ -136,7 +136,7 @@ function calcularDisponibilidadMaterial(mat) {
         });
     }
     if (esUnidad) {
-        estado.inventario.componentes.forEach((c) => {
+        (inventario.componentes || []).forEach((c) => {
             if (coincide(c.tipo)) {
                 disponible += Number(c.cantidadDisponible) || 0;
                 hallado = true;
@@ -311,7 +311,7 @@ function renderDetallePatron(p) {
     html += `<div class="item-details">
         <span><strong>Código:</strong> ${escapeHtml(p.codigo)}</span>
         <span><strong>Categoría:</strong> ${escapeHtml(p.categoria || "-")}</span>
-        <span><strong>Modificado:</strong> ${new Date(p.fechaModificacion).toLocaleString("es-AR")}</span>
+        <span><strong>Modificado:</strong> ${formatearFecha(p.fechaModificacion)}</span>
     </div>`;
 
     html += `<h4>Materiales necesarios</h4>`;

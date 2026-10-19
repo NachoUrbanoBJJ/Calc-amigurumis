@@ -34,8 +34,10 @@ export function calcularComponente(cantidadComprada, precioCompra, cantidadUtili
     return isNaN(costoComponente) || !isFinite(costoComponente) ? 0 : costoComponente;
 }
 
-export function calcularTotalComponentes(componentes) {
+export function calcularTotalComponentes(componentes = []) {
+    if (!Array.isArray(componentes)) return 0;
     return componentes.reduce((total, comp) => {
+        if (!comp) return total;
         const costo = calcularComponente(comp.cantidadComprada, comp.precioCompra, comp.cantidadUtilizada);
         return total + costo;
     }, 0);

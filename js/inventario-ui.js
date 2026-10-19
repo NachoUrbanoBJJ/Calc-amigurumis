@@ -1,11 +1,12 @@
 import { estado } from "./estado.js";
-import { escapeHtml, texto, num, valor, normalizar, limpiarCampos, descargarJson } from "./utils.js";
+import { escapeHtml, texto, num, valor, normalizar, limpiarCampos, descargarJson, casiIgual } from "./utils.js";
 import { formatearMoneda } from "./ui.js";
 import {
     guardarInventario,
     agregarLanaInventario,
     agregarRellenoInventario,
     agregarComponenteInventario,
+    normalizarInventario,
 } from "./inventario.js";
 
 // ---------------------------------------------------------------------------
@@ -46,8 +47,8 @@ if (btnAgregarLanaInv) {
             (x) =>
                 normalizar(x.color) === normalizar(lana.color) &&
                 normalizar(x.marca) === normalizar(lana.marca) &&
-                x.precioOvillo === lana.precioOvillo &&
-                x.gramosOvillo === lana.gramosOvillo
+                casiIgual(x.precioOvillo, lana.precioOvillo) &&
+                casiIgual(x.gramosOvillo, lana.gramosOvillo)
         );
         if (duplicada) {
             if (
@@ -116,8 +117,8 @@ if (btnAgregarRellenoInv) {
             (x) =>
                 normalizar(x.tipo) === normalizar(relleno.tipo) &&
                 normalizar(x.marca) === normalizar(relleno.marca) &&
-                x.precioRelleno === relleno.precioRelleno &&
-                x.gramosRelleno === relleno.gramosRelleno
+                casiIgual(x.precioRelleno, relleno.precioRelleno) &&
+                casiIgual(x.gramosRelleno, relleno.gramosRelleno)
         );
         if (duplicado) {
             if (
@@ -190,7 +191,7 @@ if (btnAgregarCompInv) {
         }
 
         const duplicado = estado.inventario.componentes.find(
-            (x) => normalizar(x.tipo) === normalizar(comp.tipo) && x.precioCompra === comp.precioCompra
+            (x) => normalizar(x.tipo) === normalizar(comp.tipo) && casiIgual(x.precioCompra, comp.precioCompra)
         );
         if (duplicado) {
             if (
@@ -242,11 +243,7 @@ if (inputImportarInventario) {
         reader.onload = (ev) => {
             try {
                 const data = JSON.parse(ev.target.result);
-                estado.inventario = {
-                    lanas: Array.isArray(data.lanas) ? data.lanas : [],
-                    rellenos: Array.isArray(data.rellenos) ? data.rellenos : [],
-                    componentes: Array.isArray(data.componentes) ? data.componentes : [],
-                };
+                estado.inventario = normalizarInventario(data);
                 guardarInventario(estado.inventario);
                 renderInventario();
                 alert("Inventario importado correctamente");

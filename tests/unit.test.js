@@ -35,7 +35,11 @@ import {
     descontarComponentes,
     guardarInventario,
     cargarInventario,
+    normalizarInventario,
+    coincideTexto,
 } from "../js/inventario.js";
+
+import { leerJson, guardarJson, storageDisponible } from "../js/almacenamiento.js";
 
 // ---------------------------------------------------------------------------
 // localStorage mínimo para los módulos que persisten datos
@@ -292,4 +296,111 @@ test("cargarInventario: sin datos devuelve estructura vacía", () => {
     stubLocalStorage();
     const cargado = cargarInventario();
     assert.deepEqual(cargado, { lanas: [], rellenos: [], componentes: [] });
+});
+
+// ---------------------------------------------------------------------------
+// Robustez: coincidencia tolerante también en lana y relleno
+// ---------------------------------------------------------------------------
+test("coincideTexto: iguales o contenidos", () => {
+    assert.equal(coincideTexto("ojos", "Ojos de seguridad 12mm"), true);
+    assert.equal(coincideTexto("Rojo", "Rojo oscuro"), true);
+    assert.equal(coincideTexto("Rojo", "Azul"), false);
+    assert.equal(coincideTexto("", "Rojo"), false);
+});
+
+test("descontarLana: coincidencia tolerante de color parcial", () => {
+    const inv = { lanas: [], rellenos: [], componentes: [] };
+    agregarLanaInventario(inv, {
+        color: "Rojo oscuro",
+        marca: "Drops",
+        precioOvillo: 1000,
+        gramosOvillo: 100,
+        gramosDisponibles: 500,
+    });
+    const r = descontarLana(inv, { color: "Rojo", marca: "", gramosUsados: 50 });
+    assert.equal(r.descontado, 50);
+    assert.equal(inv.lanas[0].gramosDisponibles, 450);
+});
+
+test("descontarRelleno: coincidencia tolerante de tipo parcial", () => {
+    const inv = { lanas: [], rellenos: [], componentes: [] };
+    agregarRellenoInventario(inv, {
+        tipo: "Fibra siliconada",
+        marca: "HobbyFill",
+        precioRelleno: 2000,
+        gramosRelleno: 1000,
+        gramosDisponibles: 800,
+    });
+    const r = descontarRelleno(inv, { tipo: "siliconada", marca: "", gramosUsados: 100 });
+    assert.equal(r.descontado, 100);
+    assert.equal(inv.rellenos[0].gramosDisponibles, 700);
+});
+
+test("descontarLana: inventario inválido no lanza", () => {
+    assert.deepEqual(descontarLana(null, { color: "Rojo", gramosUsados: 10 }), {
+        descontado: 0,
+        actualizado: false,
+    });
+    assert.deepEqual(descontarComponentes(undefined, undefined), { actualizado: false });
+});
+
+// ---------------------------------------------------------------------------
+// Robustez: normalización de inventario importado
+// ---------------------------------------------------------------------------
+test("normalizarInventario: descarta elementos no válidos", () => {
+    const inv = normalizarInventario({
+        lanas: [{ color: "Rojo" }, null, "basura", 42],
+        rellenos: "no es array",
+        componentes: [{ tipo: "Ojos" }],
+    });
+    assert.equal(inv.lanas.length, 1);
+    assert.deepEqual(inv.rellenos, []);
+    assert.equal(inv.componentes.length, 1);
+    assert.deepEqual(normalizarInventario(null), { lanas: [], rellenos: [], componentes: [] });
+});
+
+// ---------------------------------------------------------------------------
+// Robustez: cálculos con datos faltantes
+// ---------------------------------------------------------------------------
+test("calcularTotalComponentes: tolera undefined y elementos nulos", () => {
+    assert.equal(calcularTotalComponentes(), 0);
+    assert.equal(calcularTotalComponentes(null), 0);
+    assert.equal(calcularTotalComponentes([null, { cantidadComprada: 2, precioCompra: 10, cantidadUtilizada: 1 }]), 5);
+});
+
+// ---------------------------------------------------------------------------
+// Robustez: almacenamiento con errores
+// ---------------------------------------------------------------------------
+test("leerJson: devuelve el valor por defecto si la clave no existe o está corrupta", () => {
+    stubLocalStorage();
+    assert.deepEqual(leerJson("no-existe", []), []);
+    localStorage.setItem("corrupta", "{ esto no es json");
+    assert.equal(leerJson("corrupta", "default"), "default");
+});
+
+test("guardarJson: devuelve false y no rompe si falla el guardado", () => {
+    stubLocalStorage();
+    const original = localStorage.setItem;
+    const errores = [];
+    const originalError = console.error;
+    console.error = () => errores.push(1);
+    localStorage.setItem = () => {
+        throw new Error("cuota llena");
+    };
+    const ok = guardarJson("clave", { a: 1 });
+    localStorage.setItem = original;
+    console.error = originalError;
+    assert.equal(ok, false);
+    assert.equal(errores.length, 1);
+});
+
+test("guardarJson: devuelve true cuando guarda bien", () => {
+    stubLocalStorage();
+    assert.equal(guardarJson("clave", { a: 1 }), true);
+    assert.deepEqual(leerJson("clave"), { a: 1 });
+});
+
+test("storageDisponible: true con localStorage funcional", () => {
+    stubLocalStorage();
+    assert.equal(storageDisponible(), true);
 });

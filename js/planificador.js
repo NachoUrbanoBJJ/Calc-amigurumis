@@ -1,3 +1,6 @@
+import { leerJson, guardarJson } from "./almacenamiento.js";
+import { esObjeto } from "./utils.js";
+
 const STORAGE_KEY_PROYECTOS = "calc-amigurumis-proyectos-v2";
 const STORAGE_KEY_PLAN_OLD = "calc-amigurumis-planificador-v1";
 const STORAGE_KEY_GUARDADOS_OLD = "calc-amigurumis-proyectos-guardados-v1";
@@ -65,17 +68,13 @@ export function normalizarProyecto(p) {
 }
 
 export function cargarProyectos() {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY_PROYECTOS);
-        if (raw) {
-            const data = JSON.parse(raw);
-            return Array.isArray(data) ? data.map(normalizarProyecto) : [];
-        }
-        return migrarProyectosAntiguos();
-    } catch (error) {
-        console.error("Error al cargar proyectos", error);
+    const data = leerJson(STORAGE_KEY_PROYECTOS, null);
+    if (Array.isArray(data)) return data.filter(esObjeto).map(normalizarProyecto);
+    if (data !== null) {
+        console.warn("Se ignoraron proyectos con formato inválido.");
         return [];
     }
+    return migrarProyectosAntiguos();
 }
 
 /**
@@ -84,22 +83,14 @@ export function cargarProyectos() {
 function migrarProyectosAntiguos() {
     const todos = [];
 
-    try {
-        const plan = JSON.parse(localStorage.getItem(STORAGE_KEY_PLAN_OLD) || "[]");
-        if (Array.isArray(plan)) {
-            plan.forEach((p) => todos.push(normalizarProyecto({ ...p, estado: "planificando" })));
-        }
-    } catch (e) {
-        console.warn("No se pudo migrar proyectos planificados", e);
+    const plan = leerJson(STORAGE_KEY_PLAN_OLD, []);
+    if (Array.isArray(plan)) {
+        plan.filter(esObjeto).forEach((p) => todos.push(normalizarProyecto({ ...p, estado: "planificando" })));
     }
 
-    try {
-        const guardados = JSON.parse(localStorage.getItem(STORAGE_KEY_GUARDADOS_OLD) || "[]");
-        if (Array.isArray(guardados)) {
-            guardados.forEach((p) => todos.push(normalizarProyecto(p)));
-        }
-    } catch (e) {
-        console.warn("No se pudieron migrar proyectos guardados", e);
+    const guardados = leerJson(STORAGE_KEY_GUARDADOS_OLD, []);
+    if (Array.isArray(guardados)) {
+        guardados.filter(esObjeto).forEach((p) => todos.push(normalizarProyecto(p)));
     }
 
     if (todos.length) {
@@ -109,11 +100,7 @@ function migrarProyectosAntiguos() {
 }
 
 export function guardarProyectos(proyectos) {
-    try {
-        localStorage.setItem(STORAGE_KEY_PROYECTOS, JSON.stringify(proyectos));
-    } catch (error) {
-        console.error("Error al guardar proyectos", error);
-    }
+    return guardarJson(STORAGE_KEY_PROYECTOS, proyectos);
 }
 
 export function crearProyecto(nombre, tipo, notas) {
@@ -221,37 +208,26 @@ function asignarCodigosFaltantes(normalizados) {
  * Normaliza una lista de patrones (de localStorage o de un backup) y les asigna código si falta.
  */
 export function normalizarPatrones(lista) {
-    const normalizados = (Array.isArray(lista) ? lista : []).map(normalizarPatron);
+    const normalizados = (Array.isArray(lista) ? lista : []).filter(esObjeto).map(normalizarPatron);
     asignarCodigosFaltantes(normalizados);
     return normalizados;
 }
 
 export function cargarPatrones() {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY_PATRONES);
-        const data = raw ? JSON.parse(raw) : [];
-        if (!Array.isArray(data)) return [];
+    const data = leerJson(STORAGE_KEY_PATRONES, []);
+    if (!Array.isArray(data)) return [];
+    const normalizados = normalizarPatrones(data);
 
-        const normalizados = data.map(normalizarPatron);
-
-        // Persistimos para que los códigos queden estables entre recargas.
-        if (asignarCodigosFaltantes(normalizados)) {
-            guardarPatrones(normalizados);
-        }
-
-        return normalizados;
-    } catch (e) {
-        console.error("Error al cargar patrones", e);
-        return [];
+    // Persistimos para que los códigos queden estables entre recargas.
+    if (asignarCodigosFaltantes(normalizados)) {
+        guardarPatrones(normalizados);
     }
+
+    return normalizados;
 }
 
 export function guardarPatrones(patrones) {
-    try {
-        localStorage.setItem(STORAGE_KEY_PATRONES, JSON.stringify(patrones));
-    } catch (e) {
-        console.error("Error al guardar patrones", e);
-    }
+    return guardarJson(STORAGE_KEY_PATRONES, patrones);
 }
 
 export function agregarPatron(datos, codigo) {

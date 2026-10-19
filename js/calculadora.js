@@ -207,7 +207,7 @@ function calcularTodo() {
     const errores = validarCalculadora();
     mostrarErroresCalculadora(errores);
     if (errores.length) {
-        resultados.style.display = "none";
+        if (resultados) resultados.style.display = "none";
         return;
     }
 
@@ -235,8 +235,10 @@ function calcularTodo() {
     mostrarDesgloseComponentes(estado.componentes, document.getElementById("desgloseComponentes"));
     mostrarListaComponentes(estado.componentes, listaComponentes);
 
-    resultados.style.display = "block";
-    resultados.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (resultados) {
+        resultados.style.display = "block";
+        resultados.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
 
     aplicarDescuentoInventario();
 }
@@ -272,6 +274,8 @@ function limpiarTodo() {
     estado.componentes.length = 0;
     mostrarListaComponentes(estado.componentes, listaComponentes);
 
+    firmaDescontada = null;
+
     const desglose = document.getElementById("desgloseComponentes");
     if (desglose) desglose.innerHTML = "";
 
@@ -285,12 +289,34 @@ function limpiarTodo() {
     if (tipoComponente) mostrarComponente(datosComponentes, tipoComponente);
 }
 
+// Firma del último cálculo que descontó stock: evita descontar dos veces si se
+// aprieta "Calcular" repetidamente sin cambiar los datos.
+let firmaDescontada = null;
+
+function firmaCalculo() {
+    return JSON.stringify({
+        lana: [texto("colorLana"), texto("marcaLana"), num("gramosUsados")],
+        relleno: [texto("tipoRelleno"), texto("marcaRelleno"), num("rellenoUsado")],
+        componentes: estado.componentes.map((c) => [c.tipo, c.cantidadUtilizada]),
+    });
+}
+
 /**
  * Descuenta stock del inventario (al presionar Calcular, con confirmación).
  * Si no hay material coincidente: calcula pero no actualiza el inventario.
+ * Si el mismo cálculo ya se descontó, no lo vuelve a hacer.
  */
 function aplicarDescuentoInventario() {
     const aviso = document.getElementById("avisoStock");
+
+    const firma = firmaCalculo();
+    if (firma === firmaDescontada) {
+        if (aviso) {
+            aviso.textContent =
+                "ℹ️ Este cálculo ya se descontó del inventario (Limpiá o cambiá los datos para volver a descontar).";
+        }
+        return;
+    }
 
     const antes = JSON.parse(JSON.stringify(estado.inventario));
     const preview = JSON.parse(JSON.stringify(estado.inventario));
@@ -336,12 +362,14 @@ function aplicarDescuentoInventario() {
     }
 
     estado.inventario = preview;
-    guardarInventario(estado.inventario);
+    const guardado = guardarInventario(estado.inventario);
     renderInventario();
     if (aviso) {
-        aviso.textContent =
-            "✔️ Stock descontado del inventario → " + detalle.map((d) => d.replace("• ", "")).join(" · ");
+        aviso.textContent = guardado
+            ? "✔️ Stock descontado del inventario → " + detalle.map((d) => d.replace("• ", "")).join(" · ")
+            : "⚠️ Stock descontado, pero no se pudo guardar en el dispositivo. Exportá un backup.";
     }
+    firmaDescontada = firma;
 }
 
 // ---------------------------------------------------------------------------

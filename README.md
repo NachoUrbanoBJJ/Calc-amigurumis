@@ -14,6 +14,8 @@ componentes y mano de obra), guardar patrones, planificar proyectos y administra
   chips por categoría (mapeo). Se puede crear un proyecto a partir de un patrón.
 - **Backup**: exportar/importar todo (inventario + proyectos + patrones) en JSON.
 - **PWA**: instalable en PC y Android, funciona sin conexión.
+- **Robustez**: guardado a prueba de fallos (avisa si el almacenamiento está lleno o bloqueado),
+  sin descuentos de stock duplicados, avisos globales ante errores inesperados.
 - Moneda en **pesos argentinos (ARS)**. Validaciones de entrada y escapado de HTML.
 
 ## Requisitos
@@ -71,6 +73,7 @@ Calcuadora/
 │   ├── planificador-ui.js  # Sección Planificador
 │   ├── patrones-ui.js      # Sección Patrones
 │   ├── backup.js           # Exportar/importar todo
+│   ├── almacenamiento.js   # localStorage con manejo de errores
 │   ├── render.js           # renderAll()
 │   ├── pwa.js              # Registro del Service Worker
 │   └── scripts.js          # Punto de entrada
@@ -102,4 +105,5 @@ Ver [`ROADMAP.md`](./ROADMAP.md). Resumen:
 - ✅ Bloques 0, 1, 2 y 3 (base, calculadora, features, persistencia).
 - ✅ Inventario, proyectos y patrones con búsqueda y mapeo.
 - ✅ PWA instalable (manifest + service worker + iconos).
+- ✅ Bloque R: robustez y manejo de errores.
 - ⬜ Bloques 4-7: pulido de UI, backup avanzado y empaquetado nativo (Capacitor).

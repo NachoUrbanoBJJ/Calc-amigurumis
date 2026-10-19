@@ -81,6 +81,21 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ `package-lock.json` versionado
 - ✅ README y ROADMAP actualizados
 
+## Bloque R — Robustez y manejo de errores ✅
+
+- ✅ Capa de almacenamiento (`almacenamiento.js`): lectura/escritura segura, detecta
+  almacenamiento no disponible y **avisa** si falla un guardado (cuota llena / modo privado)
+- ✅ Aviso global no bloqueante (`#avisoGlobal`) + manejador de errores temprano y
+  `unhandledrejection` (una excepción ya no deja la pantalla congelada en silencio)
+- ✅ Ayudantes de DOM a prueba de fallos (`num`/`texto`/`valor` devuelven `""` en vez de lanzar)
+- ✅ **Sin doble descuento de stock**: apretar _Calcular_ dos veces no descuenta de nuevo
+- ✅ **Coincidencia unificada** (tolerante) entre disponibilidad de patrones y descuento de lana/relleno
+- ✅ Import de backup arreglado: las listas vacías **sí** borran datos; se resetean los formularios
+- ✅ Validación/descarte de datos corruptos (`esObjeto`, `normalizarInventario`)
+- ✅ Comparación de números con tolerancia (detección de duplicados con decimales)
+- ✅ Fechas inválidas muestran `-` en vez de "Invalid Date"
+- ✅ Tests ampliados (34 en total)
+
 ## Bloque 6 — App Android nativa (Capacitor) 📱
 
 - ⬜ Instalar Android Studio + JDK
@@ -115,7 +130,7 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 
 ```
 Bloque 0 → Bloque 1 → Bloque 4 (responsive) → Bloque 3 → Bloque 5 (PWA) →
-Bloque C (prolijidad) → Bloque 2 (extras) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
+Bloque C (prolijidad) → Bloque R (robustez) → Bloque 2 (extras) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
 ```
 
 Primero que funcione (0–1), después que se vea bien (4), que no pierda datos (3),
