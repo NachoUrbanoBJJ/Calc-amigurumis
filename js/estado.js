@@ -1,5 +1,6 @@
 import { cargarProyectos, cargarPatrones } from "./planificador.js";
 import { cargarInventario } from "./inventario.js";
+import { cargarCategorias } from "./categorias.js";
 import { storageDisponible } from "./almacenamiento.js";
 import { cargarConfig, guardarConfig } from "./config.js";
 
@@ -28,6 +29,9 @@ export const estado = {
 
     // Inventario
     inventario: cargarInventario(),
+
+    // Categorías de componentes (calculadora / inventario)
+    categorias: cargarCategorias(),
 };
 
 // ---------------------------------------------------------------------------

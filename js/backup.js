@@ -2,6 +2,7 @@ import { estado } from "./estado.js";
 import { descargarJson, esObjeto } from "./utils.js";
 import { normalizarPatrones, normalizarProyecto, guardarPatrones, guardarProyectos } from "./planificador.js";
 import { guardarInventario, normalizarInventario } from "./inventario.js";
+import { normalizarCategorias, guardarCategorias } from "./categorias.js";
 import { renderAll } from "./render.js";
 import { confirmar, mostrarAviso } from "./modal.js";
 
@@ -12,10 +13,11 @@ const btnExportarTodo = document.getElementById("btnExportarTodo");
 if (btnExportarTodo) {
     btnExportarTodo.addEventListener("click", () => {
         descargarJson(`backup-amigurumis-${Date.now()}.json`, {
-            version: 2,
+            version: 3,
             inventario: estado.inventario,
             patrones: estado.patrones,
             proyectos: estado.proyectos,
+            categorias: estado.categorias,
         });
     });
 }
@@ -45,7 +47,7 @@ if (inputImportarTodo) {
                 if (!esObjeto(data)) throw new Error("Formato inválido");
 
                 const ok = await confirmar(
-                    "Esto reemplazará tus datos actuales (inventario, proyectos y patrones). ¿Continuar?",
+                    "Esto reemplazará tus datos actuales (inventario, proyectos, patrones y categorías). ¿Continuar?",
                     { titulo: "Importar backup", ok: "Sí, reemplazar" }
                 );
                 if (!ok) {
@@ -72,6 +74,16 @@ if (inputImportarTodo) {
                     resumen.push(`${estado.proyectos.length} proyectos`);
                 }
 
+                const categoriasImport = Array.isArray(data.categorias)
+                    ? data.categorias
+                    : Array.isArray(data.categoriasComponentes)
+                      ? data.categoriasComponentes
+                      : null;
+                if (categoriasImport !== null) {
+                    estado.categorias = normalizarCategorias(categoriasImport);
+                    resumen.push(`${estado.categorias.length} categorías`);
+                }
+
                 estado.proyectoActivo = null;
                 estado.proyectoSeleccionadoId = null;
                 estado.proyectoRevisadoId = null;
@@ -82,6 +94,7 @@ if (inputImportarTodo) {
                 guardarInventario(estado.inventario);
                 guardarPatrones(estado.patrones);
                 guardarProyectos(estado.proyectos);
+                guardarCategorias(estado.categorias);
 
                 renderAll();
                 await mostrarAviso(

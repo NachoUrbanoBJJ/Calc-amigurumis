@@ -44,6 +44,17 @@ import { esSeccionValida } from "../js/utils.js";
 
 import { leerJson, guardarJson, storageDisponible } from "../js/almacenamiento.js";
 
+import {
+    CATEGORIAS_COMPONENTES_POR_DEFECTO,
+    normalizarCategorias,
+    normalizarListaCategorias,
+    agregarCategoria,
+    renombrarCategoria,
+    eliminarCategoria,
+    guardarCategorias,
+    cargarCategorias,
+} from "../js/categorias.js";
+
 // ---------------------------------------------------------------------------
 // localStorage mínimo para los módulos que persisten datos
 // ---------------------------------------------------------------------------
@@ -434,4 +445,54 @@ test("guardarJson: devuelve true cuando guarda bien", () => {
 test("storageDisponible: true con localStorage funcional", () => {
     stubLocalStorage();
     assert.equal(storageDisponible(), true);
+});
+
+// ---------------------------------------------------------------------------
+// categorias.js — categorías de componentes editables
+// ---------------------------------------------------------------------------
+test("normalizarCategorias: defaults, limpieza y formato viejo", () => {
+    assert.deepEqual(normalizarCategorias(null), CATEGORIAS_COMPONENTES_POR_DEFECTO);
+    assert.deepEqual(normalizarCategorias("basura"), CATEGORIAS_COMPONENTES_POR_DEFECTO);
+    assert.deepEqual(normalizarCategorias([" Ojos ", "", "ojos", 42, "Cinta"]), ["Ojos", "Cinta"]);
+    assert.deepEqual(normalizarCategorias({ componentes: ["A", "a", "B"] }), ["A", "B"]);
+    assert.deepEqual(normalizarCategorias([]), []);
+    assert.deepEqual(normalizarListaCategorias("no es array"), []);
+});
+
+test("agregarCategoria: valida vacío y duplicados sin distinguir mayúsculas", () => {
+    assert.equal(agregarCategoria(["Ojos"], "   ").ok, false);
+    assert.equal(agregarCategoria(["Ojos"], "ojos").ok, false);
+
+    const r = agregarCategoria(["Ojos"], " Cinta ");
+    assert.equal(r.ok, true);
+    assert.deepEqual(r.lista, ["Ojos", "Cinta"]);
+    // No muta la lista original
+    assert.deepEqual(agregarCategoria(["Ojos"], "Cinta").lista, ["Ojos", "Cinta"]);
+});
+
+test("renombrarCategoria / eliminarCategoria", () => {
+    const r = renombrarCategoria(["Ojos", "Cinta"], 0, "Ojos de seguridad");
+    assert.equal(r.ok, true);
+    assert.deepEqual(r.lista, ["Ojos de seguridad", "Cinta"]);
+
+    // Permite guardar el mismo nombre en el mismo índice
+    assert.equal(renombrarCategoria(["Ojos"], 0, "ojos").ok, true);
+    // Y rechaza duplicados en otro índice o índices inválidos
+    assert.equal(renombrarCategoria(["Ojos", "Cinta"], 0, "cinta").ok, false);
+    assert.equal(renombrarCategoria(["Ojos"], 5, "X").ok, false);
+
+    assert.deepEqual(eliminarCategoria(["A", "B", "C"], 1), ["A", "C"]);
+    assert.deepEqual(eliminarCategoria(null, 0), []);
+});
+
+test("guardarCategorias / cargarCategorias: ida y vuelta (incluye lista vacía)", () => {
+    stubLocalStorage();
+    guardarCategorias(["Ojos", " ojos ", "Cinta"]);
+    assert.deepEqual(cargarCategorias(), ["Ojos", "Cinta"]);
+
+    guardarCategorias([]);
+    assert.deepEqual(cargarCategorias(), []);
+
+    localStorage.setItem("calc-amigurumis-categorias-componentes-v1", "{ roto");
+    assert.deepEqual(cargarCategorias(), CATEGORIAS_COMPONENTES_POR_DEFECTO);
 });

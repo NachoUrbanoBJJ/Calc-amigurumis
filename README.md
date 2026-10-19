@@ -12,10 +12,12 @@ componentes y mano de obra), guardar patrones, planificar proyectos y administra
 - **Descuento de stock**: al presionar _Calcular_ (con confirmación) se descuenta del inventario;
   si no alcanza, avisa cuánto faltó.
 - **Componentes de la calculadora**: se pueden agregar, **editar y eliminar** antes de calcular.
+- **Categorías editables**: las categorías de componentes se administran desde Inventario (agregar,
+  editar, eliminar) y alimentan la calculadora y las sugerencias del inventario.
 - **Planificador de proyectos**: secciones (puntos, vueltas, altura, notas), estado (planificando/terminado).
 - **Patrones**: código legible `PAT-0001`, materiales estructurados, búsqueda por nombre/código y
   chips por categoría (mapeo). Se puede crear un proyecto a partir de un patrón.
-- **Backup**: exportar/importar todo (inventario + proyectos + patrones) en JSON.
+- **Backup**: exportar/importar todo (inventario + proyectos + patrones + categorías) en JSON.
 - **PWA**: instalable en PC y Android, funciona sin conexión.
 - **Robustez**: guardado a prueba de fallos (avisa si el almacenamiento está lleno o bloqueado),
   sin descuentos de stock duplicados, avisos globales ante errores inesperados.
@@ -69,11 +71,13 @@ Calcuadora/
 │   ├── calculos.js         # Lógica pura de cálculos (sin DOM)
 │   ├── ui.js               # Helpers de render de la interfaz
 │   ├── inventario.js       # Inventario + descuento de stock (datos)
+│   ├── categorias.js       # Categorías de componentes (datos + persistencia)
 │   ├── planificador.js     # Proyectos y patrones (datos + persistencia)
 │   ├── utils.js            # Utilidades de DOM y formato
 │   ├── estado.js           # Estado en memoria + configuración
 │   ├── calculadora.js      # Sección Calculadora
 │   ├── inventario-ui.js    # Sección Inventario
+│   ├── categorias-ui.js    # Administración de categorías
 │   ├── planificador-ui.js  # Sección Planificador
 │   ├── patrones-ui.js      # Sección Patrones
 │   ├── backup.js           # Exportar/importar todo
@@ -95,12 +99,13 @@ Calcuadora/
 
 ## Persistencia (localStorage)
 
-| Clave                           | Contenido                              |
-| ------------------------------- | -------------------------------------- |
-| `calc-amigurumis-inventario-v1` | Lanas, rellenos y componentes.         |
-| `calc-amigurumis-proyectos-v2`  | Proyectos (planificando/terminados).   |
-| `calc-amigurumis-patrones-v2`   | Patrones con código `PAT-000x`.        |
-| `calc-amigurumis-config-v1`     | Configuración (último valor por hora + última sección). |
+| Clave                                       | Contenido                                               |
+| ------------------------------------------- | ------------------------------------------------------- |
+| `calc-amigurumis-inventario-v1`             | Lanas, rellenos y componentes.                          |
+| `calc-amigurumis-proyectos-v2`              | Proyectos (planificando/terminados).                    |
+| `calc-amigurumis-patrones-v2`               | Patrones con código `PAT-000x`.                         |
+| `calc-amigurumis-config-v1`                 | Configuración (último valor por hora + última sección). |
+| `calc-amigurumis-categorias-componentes-v1` | Categorías de componentes.                              |
 
 ## Estado actual
 
@@ -111,4 +116,5 @@ Ver [`ROADMAP.md`](./ROADMAP.md). Resumen:
 - ✅ PWA instalable (manifest + service worker + iconos).
 - ✅ Bloque R: robustez y manejo de errores.
 - ✅ Bloque U: modales propios, CRUD de inventario/componentes, avisos de stock y memoria de sección.
+- ✅ Bloque 2b: categorías de componentes editables (calculadora + inventario + backup).
 - ⬜ Bloques 4-7: pulido de UI, backup avanzado y empaquetado nativo (Capacitor).

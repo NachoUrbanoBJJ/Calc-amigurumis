@@ -109,11 +109,6 @@
 
         <select id="tipoComponente">
             <option value="">Seleccionar...</option>
-            <option value="ojos">Ojos</option>
-            <option value="piedras">Piedras</option>
-            <option value="cinta">Cinta</option>
-            <option value="botones">Botones</option>
-            <option value="llavero">Llavero</option>
         </select>
 
         <div id="datosComponentes">
@@ -302,7 +297,7 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label for="invTipoComp">Tipo de Componente</label>
-                    <input type="text" id="invTipoComp" placeholder="Ej: Ojos de seguridad 12mm">
+                    <input type="text" id="invTipoComp" list="categoriasComponentesOpciones" placeholder="Ej: Ojos de seguridad 12mm">
                 </div>
                 <div class="form-group">
                     <label for="invCantCompradaComp">Cantidad Comprada (ud.)</label>
@@ -323,6 +318,24 @@
             </div>
             <h3>Stock de Componentes</h3>
             <div id="listaComponentesInv" class="lista-items"></div>
+        </div>
+
+        <datalist id="categoriasComponentesOpciones"></datalist>
+
+        <div class="card">
+            <h3>Categorías de Componentes</h3>
+            <p class="subtitulo">Se usan en la calculadora y como sugerencias en el inventario. Podés agregarlas, editarlas o eliminarlas.</p>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="nuevaCategoriaComp">Nombre de la categoría</label>
+                    <input type="text" id="nuevaCategoriaComp" placeholder="Ej: Ojos de seguridad">
+                </div>
+            </div>
+            <div class="acciones-small">
+                <button type="button" id="btnAgregarCategoriaComp">Agregar categoría</button>
+                <button type="button" id="btnCancelarEdicionCategoria" class="btn-secundario" style="display:none;">Cancelar edición</button>
+            </div>
+            <div id="listaCategoriasComp" class="lista-items"></div>
         </div>
 
         <div class="card">

@@ -31,7 +31,7 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ Precio de venta final + margen de ganancia (%)
 - ✅ Guardar varias recetas/proyectos
 - ✅ Historial de amigurumis calculados
-- ⬜ Categorías de componentes editables por el usuario
+- ✅ Categorías de componentes editables (agregar, renombrar y eliminar; se usan en la calculadora y como sugerencias del inventario)
 - ⬜ Duplicar un proyecto
 - ✅ Notas por proyecto
 - ✅ **Gestor de patrones de amigurumi** (código `PAT-000x`, materiales estructurados, búsqueda, chips por categoría)
@@ -96,7 +96,7 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ Validación/descarte de datos corruptos (`esObjeto`, `normalizarInventario`)
 - ✅ Comparación de números con tolerancia (detección de duplicados con decimales)
 - ✅ Fechas inválidas muestran `-` en vez de "Invalid Date"
-- ✅ Tests ampliados (37 en total)
+- ✅ Tests ampliados (41 en total)
 
 ## Bloque U — UX y funcionalidad (modales + CRUD) ✅
 
@@ -110,7 +110,17 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ **Avisos de stock**: badges `Sin stock` / `Stock bajo` y resumen arriba del inventario
 - ✅ **Descuento de stock transparente**: si no alcanza, avisa cuánto faltó
 - ✅ Botones de cancelar edición y nombres de acción coherentes en todos los formularios
-- ✅ Tests ampliados (37 en total)
+- ✅ Tests ampliados (41 en total)
+
+## Bloque 2b — Categorías editables ✅
+
+- ✅ **Categorías de componentes administrables** desde Inventario: agregar, editar y eliminar
+  (con confirmación). Se guardan en `calc-amigurumis-categorias-componentes-v1`.
+- ✅ El `<select>` de la calculadora se arma solo con esas categorías y conserva la opción elegida
+  al agregar o editar una categoría.
+- ✅ Sugerencias (`datalist`) en el alta de componentes del inventario, sin bloquear texto libre.
+- ✅ Borrar una categoría **no** modifica los materiales que ya la usan.
+- ✅ Las categorías entran en el backup completo (export/import; compatible con backups viejos).
 
 ## Bloque 6 — App Android nativa (Capacitor) 📱
 
@@ -147,7 +157,7 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 ```
 Bloque 0 → Bloque 1 → Bloque 4 (responsive) → Bloque 3 → Bloque 5 (PWA) →
 Bloque C (prolijidad) → Bloque R (robustez) → Bloque U (UX + CRUD) →
-Bloque 2 (extras) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
+Bloque 2 (extras, categorías ✅) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
 ```
 
 Primero que funcione (0–1), después que se vea bien (4), que no pierda datos (3),
