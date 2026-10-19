@@ -9,12 +9,13 @@ export function mostrarComponente(datosComponentes, tipoComponente) {
 }
 
 export function formatearMoneda(valor) {
-    return new Intl.NumberFormat("es-ES", {
+    const numero = Number(valor);
+    return new Intl.NumberFormat("es-AR", {
         style: "currency",
-        currency: "EUR",
+        currency: "ARS",
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-    }).format(valor);
+    }).format(Number.isFinite(numero) ? numero : 0);
 }
 
 export function mostrarListaComponentes(componentes, elemento) {

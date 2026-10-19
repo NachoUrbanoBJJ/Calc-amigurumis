@@ -61,6 +61,21 @@ function texto(id) {
     return document.getElementById(id).value.trim();
 }
 
+function valor(id) {
+    return document.getElementById(id).value;
+}
+
+function normalizar(t) {
+    return String(t == null ? "" : t).trim().toLowerCase();
+}
+
+function limpiarCampos(ids) {
+    ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
+}
+
 // ---------------------------------------------------------------------------
 // Navegación
 // ---------------------------------------------------------------------------
@@ -89,14 +104,23 @@ if (btnLimpiar) btnLimpiar.addEventListener("click", limpiarTodo);
 
 function agregarComponente() {
     const tipo = tipoComponente ? tipoComponente.value : "";
-    const cantidadComprada = Number(document.getElementById("cantidadComprada").value);
-    const precioCompra = Number(document.getElementById("precioCompra").value);
-    const cantidadUtilizada = Number(document.getElementById("cantidadUtilizada").value);
+    const cantidadComprada = Number(valor("cantidadComprada"));
+    const precioCompra = Number(valor("precioCompra"));
+    const cantidadUtilizada = Number(valor("cantidadUtilizada"));
 
-    if (!tipo) { alert("Selecciona un tipo de componente"); return; }
-    if (!(cantidadComprada > 0)) { alert("La cantidad comprada debe ser mayor a 0"); return; }
-    if (Number.isNaN(precioCompra) || precioCompra < 0) { alert("El precio de compra no puede ser negativo"); return; }
-    if (Number.isNaN(cantidadUtilizada) || cantidadUtilizada < 0) { alert("La cantidad utilizada no puede ser negativa"); return; }
+    if (!tipo) { alert("Seleccioná un tipo de componente."); return; }
+    if (valor("cantidadComprada") === "" || !Number.isInteger(cantidadComprada) || cantidadComprada <= 0) {
+        alert("La cantidad comprada debe ser un número entero mayor a 0.");
+        return;
+    }
+    if (valor("precioCompra") === "" || !Number.isFinite(precioCompra) || precioCompra < 0) {
+        alert("El precio de compra no puede ser negativo.");
+        return;
+    }
+    if (valor("cantidadUtilizada") === "" || !Number.isInteger(cantidadUtilizada) || cantidadUtilizada < 0) {
+        alert("La cantidad utilizada debe ser un número entero (0 o más).");
+        return;
+    }
     if (cantidadUtilizada > cantidadComprada && !confirm("La cantidad usada es mayor a la comprada. ¿Continuar?")) return;
 
     componentes.push({ tipo, cantidadComprada, precioCompra, cantidadUtilizada });
@@ -130,20 +154,93 @@ function calcularCostoActual() {
     return { costo, materialesUsados };
 }
 
-function calcularTodo() {
-    const chequeos = [
-        ["precioOvillo", (v) => v < 0],
-        ["gramosOvillo", (v) => v <= 0],
-        ["gramosUsados", (v) => v < 0],
-        ["precioRelleno", (v) => v < 0],
-        ["gramosRelleno", (v) => v <= 0],
-        ["rellenoUsado", (v) => v < 0],
-        ["horasTrabajadas", (v) => v < 0],
-        ["valorHoras", (v) => v < 0],
+function validarCalculadora() {
+    const errores = [];
+
+    const negativos = [
+        ["precioOvillo", "precio del ovillo"],
+        ["gramosOvillo", "gramos del ovillo"],
+        ["gramosUsados", "gramos usados"],
+        ["precioRelleno", "precio del relleno"],
+        ["gramosRelleno", "gramos totales de relleno"],
+        ["rellenoUsado", "relleno usado"],
+        ["horasTrabajadas", "horas trabajadas"],
+        ["valorHoras", "valor por hora"],
     ];
-    const hayError = chequeos.some(([id, esMalo]) => document.getElementById(id).value !== "" && esMalo(num(id)));
-    if (hayError) {
-        alert("Revisa los valores: no se permiten negativos ni gramos/precio en 0.");
+    negativos.forEach(([id, etiqueta]) => {
+        if (valor(id) !== "" && (Number.isNaN(num(id)) || num(id) < 0)) {
+            errores.push(`"${etiqueta}" no puede ser negativo.`);
+        }
+    });
+
+    // Lana: si usás gramos, necesitás precio y gramos del ovillo
+    if (num("gramosUsados") > 0) {
+        if (valor("precioOvillo") === "" || num("precioOvillo") <= 0) {
+            errores.push("Completá el precio del ovillo (mayor a 0) para calcular la lana usada.");
+        }
+        if (valor("gramosOvillo") === "" || num("gramosOvillo") <= 0) {
+            errores.push("Completá los gramos del ovillo (mayor a 0).");
+        }
+    } else if (valor("gramosOvillo") !== "" && num("gramosOvillo") <= 0) {
+        errores.push("Los gramos del ovillo deben ser mayores a 0.");
+    }
+
+    // Relleno: si usás gramos, necesitás precio y gramos totales
+    if (num("rellenoUsado") > 0) {
+        if (valor("precioRelleno") === "" || num("precioRelleno") <= 0) {
+            errores.push("Completá el precio del relleno (mayor a 0) para calcular el relleno usado.");
+        }
+        if (valor("gramosRelleno") === "" || num("gramosRelleno") <= 0) {
+            errores.push("Completá los gramos totales de relleno (mayor a 0).");
+        }
+    } else if (valor("gramosRelleno") !== "" && num("gramosRelleno") <= 0) {
+        errores.push("Los gramos totales de relleno deben ser mayores a 0.");
+    }
+
+    // Mano de obra: si hay horas, hace falta el valor por hora
+    if (num("horasTrabajadas") > 0 && (valor("valorHoras") === "" || num("valorHoras") <= 0)) {
+        errores.push("Completá el valor por hora (mayor a 0) para calcular la mano de obra.");
+    }
+
+    // Sin datos
+    const hayDatos =
+        [
+            "colorLana", "marcaLana", "precioOvillo", "gramosOvillo", "gramosUsados",
+            "tipoRelleno", "marcaRelleno", "precioRelleno", "gramosRelleno", "rellenoUsado",
+            "cantidadComprada", "precioCompra", "cantidadUtilizada",
+            "horasTrabajadas", "valorHoras"
+        ].some((id) => valor(id) !== "") || componentes.length > 0;
+
+    if (!hayDatos) {
+        errores.push("No hay datos para calcular. Completá al menos una sección.");
+    }
+
+    return errores;
+}
+
+function mostrarErroresCalculadora(errores) {
+    const cont = document.getElementById("erroresCalculadora");
+    if (!cont) return;
+
+    if (!errores.length) {
+        cont.innerHTML = "";
+        cont.style.display = "none";
+        return;
+    }
+
+    cont.innerHTML =
+        "<strong>Revisá estos datos:</strong><ul>" +
+        errores.map((e) => `<li>${escapeHtml(e)}</li>`).join("") +
+        "</ul>";
+    cont.style.display = "block";
+    cont.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function calcularTodo() {
+    const errores = validarCalculadora();
+    mostrarErroresCalculadora(errores);
+    if (errores.length) {
+        resultados.style.display = "none";
         return;
     }
 
@@ -185,6 +282,8 @@ function limpiarTodo() {
 
     const avisoStock = document.getElementById("avisoStock");
     if (avisoStock) avisoStock.textContent = "";
+
+    mostrarErroresCalculadora([]);
 
     if (tipoComponente) mostrarComponente(datosComponentes, tipoComponente);
 }
@@ -321,22 +420,51 @@ const btnAgregarLanaInv = document.getElementById("btnAgregarLanaInv");
 if (btnAgregarLanaInv) {
     btnAgregarLanaInv.addEventListener("click", () => {
         const lana = {
-            color: document.getElementById("invColorLana").value.trim(),
-            marca: document.getElementById("invMarcaLana").value.trim(),
-            precioOvillo: Number(document.getElementById("invPrecioOvillo").value),
-            gramosOvillo: Number(document.getElementById("invGramosOvillo").value),
-            gramosDisponibles: Number(document.getElementById("invGramosDisponibles").value),
+            color: texto("invColorLana"),
+            marca: texto("invMarcaLana"),
+            precioOvillo: num("invPrecioOvillo"),
+            gramosOvillo: num("invGramosOvillo"),
+            gramosDisponibles: num("invGramosDisponibles"),
         };
-        if (lana.gramosDisponibles < 0 || lana.precioOvillo < 0 || lana.gramosOvillo <= 0) {
-            alert("Revisa valores de lana para inventario");
+
+        const errores = [];
+        if (!lana.color) errores.push("El color es obligatorio.");
+        if (valor("invPrecioOvillo") === "" || !Number.isFinite(lana.precioOvillo) || lana.precioOvillo <= 0) {
+            errores.push("El precio del ovillo debe ser mayor a 0.");
+        }
+        if (valor("invGramosOvillo") === "" || !Number.isFinite(lana.gramosOvillo) || lana.gramosOvillo <= 0) {
+            errores.push("Los gramos por ovillo deben ser mayores a 0.");
+        }
+        if (valor("invGramosDisponibles") === "" || !Number.isFinite(lana.gramosDisponibles) || lana.gramosDisponibles < 0) {
+            errores.push("Los gramos disponibles no pueden ser negativos.");
+        }
+        if (errores.length) {
+            alert("Revisá los datos de la lana:\n\n• " + errores.join("\n• "));
             return;
         }
+
+        const duplicada = inventario.lanas.find(
+            (x) =>
+                normalizar(x.color) === normalizar(lana.color) &&
+                normalizar(x.marca) === normalizar(lana.marca) &&
+                x.precioOvillo === lana.precioOvillo &&
+                x.gramosOvillo === lana.gramosOvillo
+        );
+        if (duplicada) {
+            if (!confirm(`Ya existe una lana "${lana.color}" (${lana.marca || "sin marca"}) con el mismo precio y gramaje.\n¿Sumar ${lana.gramosDisponibles} g a la existente?`)) {
+                return;
+            }
+            duplicada.gramosDisponibles = Number((duplicada.gramosDisponibles + lana.gramosDisponibles).toFixed(3));
+            guardarInventario(inventario);
+            renderInventario();
+            limpiarCampos(["invColorLana", "invMarcaLana", "invPrecioOvillo", "invGramosOvillo", "invGramosDisponibles"]);
+            return;
+        }
+
         inventario = agregarLanaInventario(inventario, lana);
         guardarInventario(inventario);
         renderInventario();
-        ["invColorLana", "invMarcaLana", "invPrecioOvillo", "invGramosOvillo", "invGramosDisponibles"].forEach((id) => {
-            document.getElementById(id).value = "";
-        });
+        limpiarCampos(["invColorLana", "invMarcaLana", "invPrecioOvillo", "invGramosOvillo", "invGramosDisponibles"]);
     });
 }
 
@@ -344,22 +472,51 @@ const btnAgregarRellenoInv = document.getElementById("btnAgregarRellenoInv");
 if (btnAgregarRellenoInv) {
     btnAgregarRellenoInv.addEventListener("click", () => {
         const relleno = {
-            tipo: document.getElementById("invTipoRelleno").value.trim(),
-            marca: document.getElementById("invMarcaRelleno").value.trim(),
-            precioRelleno: Number(document.getElementById("invPrecioRelleno").value),
-            gramosRelleno: Number(document.getElementById("invGramosRellenoTot").value),
-            gramosDisponibles: Number(document.getElementById("invGramosRellenoDisp").value),
+            tipo: texto("invTipoRelleno"),
+            marca: texto("invMarcaRelleno"),
+            precioRelleno: num("invPrecioRelleno"),
+            gramosRelleno: num("invGramosRellenoTot"),
+            gramosDisponibles: num("invGramosRellenoDisp"),
         };
-        if (relleno.gramosDisponibles < 0 || relleno.precioRelleno < 0 || relleno.gramosRelleno <= 0) {
-            alert("Revisa valores de relleno para inventario");
+
+        const errores = [];
+        if (!relleno.tipo) errores.push("El tipo de relleno es obligatorio.");
+        if (valor("invPrecioRelleno") === "" || !Number.isFinite(relleno.precioRelleno) || relleno.precioRelleno <= 0) {
+            errores.push("El precio del relleno debe ser mayor a 0.");
+        }
+        if (valor("invGramosRellenoTot") === "" || !Number.isFinite(relleno.gramosRelleno) || relleno.gramosRelleno <= 0) {
+            errores.push("Los gramos totales deben ser mayores a 0.");
+        }
+        if (valor("invGramosRellenoDisp") === "" || !Number.isFinite(relleno.gramosDisponibles) || relleno.gramosDisponibles < 0) {
+            errores.push("Los gramos disponibles no pueden ser negativos.");
+        }
+        if (errores.length) {
+            alert("Revisá los datos del relleno:\n\n• " + errores.join("\n• "));
             return;
         }
+
+        const duplicado = inventario.rellenos.find(
+            (x) =>
+                normalizar(x.tipo) === normalizar(relleno.tipo) &&
+                normalizar(x.marca) === normalizar(relleno.marca) &&
+                x.precioRelleno === relleno.precioRelleno &&
+                x.gramosRelleno === relleno.gramosRelleno
+        );
+        if (duplicado) {
+            if (!confirm(`Ya existe un relleno "${relleno.tipo}" (${relleno.marca || "sin marca"}) igual.\n¿Sumar ${relleno.gramosDisponibles} g a la existente?`)) {
+                return;
+            }
+            duplicado.gramosDisponibles = Number((duplicado.gramosDisponibles + relleno.gramosDisponibles).toFixed(3));
+            guardarInventario(inventario);
+            renderInventario();
+            limpiarCampos(["invTipoRelleno", "invMarcaRelleno", "invPrecioRelleno", "invGramosRellenoTot", "invGramosRellenoDisp"]);
+            return;
+        }
+
         inventario = agregarRellenoInventario(inventario, relleno);
         guardarInventario(inventario);
         renderInventario();
-        ["invTipoRelleno", "invMarcaRelleno", "invPrecioRelleno", "invGramosRellenoTot", "invGramosRellenoDisp"].forEach((id) => {
-            document.getElementById(id).value = "";
-        });
+        limpiarCampos(["invTipoRelleno", "invMarcaRelleno", "invPrecioRelleno", "invGramosRellenoTot", "invGramosRellenoDisp"]);
     });
 }
 
@@ -367,21 +524,49 @@ const btnAgregarCompInv = document.getElementById("btnAgregarCompInv");
 if (btnAgregarCompInv) {
     btnAgregarCompInv.addEventListener("click", () => {
         const comp = {
-            tipo: document.getElementById("invTipoComp").value.trim(),
-            cantidadComprada: Number(document.getElementById("invCantCompradaComp").value),
-            precioCompra: Number(document.getElementById("invPrecioCompraComp").value),
-            cantidadDisponible: Number(document.getElementById("invCantDispComp").value),
+            tipo: texto("invTipoComp"),
+            cantidadComprada: num("invCantCompradaComp"),
+            precioCompra: num("invPrecioCompraComp"),
+            cantidadDisponible: num("invCantDispComp"),
         };
-        if (comp.cantidadDisponible < 0 || comp.precioCompra < 0 || comp.cantidadComprada <= 0) {
-            alert("Revisa valores de componente para inventario");
+
+        const errores = [];
+        if (!comp.tipo) errores.push("El tipo de componente es obligatorio.");
+        if (valor("invCantCompradaComp") === "" || !Number.isInteger(comp.cantidadComprada) || comp.cantidadComprada <= 0) {
+            errores.push("La cantidad comprada debe ser un número entero mayor a 0.");
+        }
+        if (valor("invPrecioCompraComp") === "" || !Number.isFinite(comp.precioCompra) || comp.precioCompra <= 0) {
+            errores.push("El precio de compra debe ser mayor a 0.");
+        }
+        if (valor("invCantDispComp") === "" || !Number.isInteger(comp.cantidadDisponible) || comp.cantidadDisponible < 0) {
+            errores.push("La cantidad disponible debe ser un número entero (0 o más).");
+        } else if (comp.cantidadDisponible > comp.cantidadComprada) {
+            errores.push("La cantidad disponible no puede ser mayor a la comprada.");
+        }
+        if (errores.length) {
+            alert("Revisá los datos del componente:\n\n• " + errores.join("\n• "));
             return;
         }
+
+        const duplicado = inventario.componentes.find(
+            (x) => normalizar(x.tipo) === normalizar(comp.tipo) && x.precioCompra === comp.precioCompra
+        );
+        if (duplicado) {
+            if (!confirm(`Ya existe un componente "${comp.tipo}" con el mismo precio.\n¿Sumar ${comp.cantidadComprada} comprados y ${comp.cantidadDisponible} disponibles?`)) {
+                return;
+            }
+            duplicado.cantidadComprada += comp.cantidadComprada;
+            duplicado.cantidadDisponible += comp.cantidadDisponible;
+            guardarInventario(inventario);
+            renderInventario();
+            limpiarCampos(["invTipoComp", "invCantCompradaComp", "invPrecioCompraComp", "invCantDispComp"]);
+            return;
+        }
+
         inventario = agregarComponenteInventario(inventario, comp);
         guardarInventario(inventario);
         renderInventario();
-        ["invTipoComp", "invCantCompradaComp", "invPrecioCompraComp", "invCantDispComp"].forEach((id) => {
-            document.getElementById(id).value = "";
-        });
+        limpiarCampos(["invTipoComp", "invCantCompradaComp", "invPrecioCompraComp", "invCantDispComp"]);
     });
 }
 
@@ -805,7 +990,7 @@ function renderProyectos() {
             <div class="item-details">
                 <span>Coste total: ${formatearMoneda(p.costo.total)}</span>
                 <span>Secciones: ${p.secciones.length}</span>
-                <span>Modificado: ${new Date(p.fechaModificacion).toLocaleString("es-ES")}</span>
+                <span>Modificado: ${new Date(p.fechaModificacion).toLocaleString("es-AR")}</span>
             </div>
             <div class="item-actions">
                 <button type="button" data-revisar="${p.id}">${abierto ? "Ocultar" : "Revisar"}</button>
