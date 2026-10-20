@@ -225,6 +225,7 @@ async function eliminarProyecto(id) {
     renderProyectos();
     renderProyectoActivo();
     renderBannerProyecto();
+    mostrarAvisoGlobal(`Se eliminó el proyecto "${p.nombre}".`, "info");
 }
 
 function duplicarProyectoUI(id) {
