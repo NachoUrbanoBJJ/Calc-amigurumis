@@ -1,5 +1,6 @@
 import { leerJson, guardarJson } from "./almacenamiento.js";
 import { esObjeto } from "./utils.js";
+import { calcularPrecioIdeal } from "./calculos.js";
 
 const STORAGE_KEY_PROYECTOS = "calc-amigurumis-proyectos-v2";
 const STORAGE_KEY_PLAN_OLD = "calc-amigurumis-planificador-v1";
@@ -20,6 +21,7 @@ export function costoVacio() {
         componentes: 0,
         manoObra: 0,
         total: 0,
+        precioIdeal: 0,
         precioVenta: 0,
         ganancia: 0,
         margen: 0,
@@ -51,6 +53,8 @@ export function normalizarProyecto(p) {
             componentes: Number(costo.componentes) || 0,
             manoObra: Number(costo.manoObra) || 0,
             total,
+            // Compatibilidad: los proyectos viejos no guardaban el precio ideal.
+            precioIdeal: Number(costo.precioIdeal) || calcularPrecioIdeal(total),
             precioVenta: Number(costo.precioVenta) || 0,
             ganancia: Number(costo.ganancia) || 0,
             margen: Number(costo.margen) || 0,
@@ -115,6 +119,28 @@ export function crearProyecto(nombre, tipo, notas) {
         materialesUsados: materialesVacios(),
         patronOrigen: null,
         estado: "planificando",
+        fechaCreacion: ahora,
+        fechaModificacion: ahora,
+    };
+}
+
+/**
+ * Crea una copia independiente de un proyecto: nuevo id, nombre "(copia)",
+ * secciones con ids nuevos y fechas de creación/modificación actuales.
+ * No modifica el proyecto original.
+ */
+export function duplicarProyecto(proyecto) {
+    const base = normalizarProyecto(proyecto);
+    const ahora = new Date().toISOString();
+
+    return {
+        ...base,
+        id: generarId(),
+        nombre: `${base.nombre} (copia)`,
+        secciones: base.secciones.map((s) => ({ ...s, id: generarId() })),
+        costo: { ...base.costo },
+        materialesUsados: JSON.parse(JSON.stringify(base.materialesUsados || {})),
+        patronOrigen: base.patronOrigen ? { ...base.patronOrigen } : null,
         fechaCreacion: ahora,
         fechaModificacion: ahora,
     };

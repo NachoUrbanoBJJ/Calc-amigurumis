@@ -26,13 +26,15 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ Validaciones (campos vacíos, negativos, división por cero)
 - ✅ Errores inline (`#erroresCalculadora`)
 
-## Bloque 2 — Funciones de la app (features) 🔄
+## Bloque 2 — Funciones de la app (features) ✅
 
-- ✅ Precio de venta final + margen de ganancia (%)
+- ✅ Precio de venta final + margen de ganancia (%) — el margen y el precio son **opcionales**
+- ✅ **Precio ideal sugerido (+50 %)** sobre lo gastado y usado, siempre visible
+- ✅ **Valor por hora opcional**: sin él, el cálculo se hace y la mano de obra queda fuera (con aviso)
 - ✅ Guardar varias recetas/proyectos
-- ✅ Historial de amigurumis calculados
+- ✅ Historial de amigurumis calculados (los cálculos guardados quedan como proyectos con fecha y costo)
 - ✅ Categorías de componentes editables (agregar, renombrar y eliminar; se usan en la calculadora y como sugerencias del inventario)
-- ⬜ Duplicar un proyecto
+- ✅ **Duplicar un proyecto** (copia independiente: nuevo id, secciones y fechas)
 - ✅ Notas por proyecto
 - ✅ **Gestor de patrones de amigurumi** (código `PAT-000x`, materiales estructurados, búsqueda, chips por categoría)
 - ✅ **Inventario de materiales (lanas, relleno, componentes)**
@@ -45,7 +47,7 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ **Exportar/Importar Backup JSON (global)**
 - ✅ **Exportar/Importar Inventario JSON**
 - ✅ **Crear proyecto a partir de un patrón**
-- ⬜ Futuro: exportar a PDF / imagen / Excel
+- ✅ **Exportar proyectos y patrones a PDF, CSV (Excel) y PNG**
 
 ## Bloque 3 — Datos y persistencia ✅
 
@@ -56,15 +58,18 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ **Sincronización de stock entre proyectos e inventario**
 - ⬜ Futuro: sincronización en la nube
 
-## Bloque 4 — Diseño y experiencia (UI/UX) 🔄
+## Bloque 4 — Diseño y experiencia (UI/UX) ✅
 
-- ✅ Paleta rosa/blanco y tarjetas
+- ✅ Paleta rosa/blanco y tarjetas (tonos ajustados para contraste AA)
 - ✅ Responsive real (tarjetas con max-width + flex/grid)
-- ✅ Diseño mobile-first (media queries)
-- ⬜ Ajustes de tipografía y espaciado
+- ✅ Diseño mobile-first (base móvil + media queries de mejora)
+- ✅ Ajustes de tipografía y espaciado (tokens: tipos, espaciado, radios, sombras)
 - ✅ Feedback visual (errores inline, confirmaciones, avisos)
-- ✅ Botones/inputs cómodos para uso táctil
-- ⬜ Futuro: modo oscuro
+- ✅ Botones/inputs cómodos para uso táctil (**44 px** mínimo, `inputmode` para el teclado numérico)
+- ✅ **Modo oscuro** (automático según el sistema + botón claro/oscuro/automático persistido)
+- ✅ Accesibilidad: foco visible, enlace “Saltar al contenido”, `aria-current`, etiquetas en todos
+  los campos, `aria-live` en resultados y avisos, foco atrapado y restaurado en los modales
+- ✅ **Estilos de impresión** para exportar a PDF sin menús ni botones
 
 ## Bloque 5 — PWA (PC + Android desde navegador) ✅
 
@@ -96,7 +101,7 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ Validación/descarte de datos corruptos (`esObjeto`, `normalizarInventario`)
 - ✅ Comparación de números con tolerancia (detección de duplicados con decimales)
 - ✅ Fechas inválidas muestran `-` en vez de "Invalid Date"
-- ✅ Tests ampliados (41 en total)
+- ✅ Tests ampliados (51 en total)
 
 ## Bloque U — UX y funcionalidad (modales + CRUD) ✅
 
@@ -110,7 +115,7 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ **Avisos de stock**: badges `Sin stock` / `Stock bajo` y resumen arriba del inventario
 - ✅ **Descuento de stock transparente**: si no alcanza, avisa cuánto faltó
 - ✅ Botones de cancelar edición y nombres de acción coherentes en todos los formularios
-- ✅ Tests ampliados (41 en total)
+- ✅ Tests ampliados (**51 en total**: incluye exportaciones CSV, duplicado e importes ideales)
 
 ## Bloque 2b — Categorías editables ✅
 
@@ -155,9 +160,9 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 ## Orden sugerido de ejecución
 
 ```
-Bloque 0 → Bloque 1 → Bloque 4 (responsive) → Bloque 3 → Bloque 5 (PWA) →
+Bloque 0 → Bloque 1 → Bloque 4 (responsive/UI + modo oscuro) → Bloque 3 → Bloque 5 (PWA) →
 Bloque C (prolijidad) → Bloque R (robustez) → Bloque U (UX + CRUD) →
-Bloque 2 (extras, categorías ✅) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
+Bloque 2 completo (features + exportaciones) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
 ```
 
 Primero que funcione (0–1), después que se vea bien (4), que no pierda datos (3),

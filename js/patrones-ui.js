@@ -12,6 +12,7 @@ import {
 } from "./planificador.js";
 import { renderProyectos, abrirEditorProyecto } from "./planificador-ui.js";
 import { confirmar, mostrarAviso } from "./modal.js";
+import { imprimirPatron, descargarPatronCSV, descargarPatronPNG } from "./exportar.js";
 
 // ---------------------------------------------------------------------------
 // Formulario de patrón
@@ -414,7 +415,14 @@ export function renderPatrones() {
                 <button type="button" class="btn-secundario" data-edit-patron="${p.id}">Editar</button>
                 <button type="button" class="btn-info" data-dup-patron="${p.id}">Duplicar</button>
                 <button type="button" class="btn-info" data-proy-patron="${p.id}">Crear proyecto</button>
+                <button type="button" class="btn-secundario" data-exportar="${p.id}">Exportar</button>
                 <button type="button" class="btn-danger" data-del-patron="${p.id}">Eliminar</button>
+            </div>
+            <div class="export-row" hidden>
+                <span class="export-label">Exportar:</span>
+                <button type="button" class="btn-secundario" data-export-pdf="${p.id}">PDF</button>
+                <button type="button" class="btn-secundario" data-export-csv="${p.id}">CSV (Excel)</button>
+                <button type="button" class="btn-secundario" data-export-png="${p.id}">PNG</button>
             </div>
             ${abierto ? renderDetallePatron(p) : ""}
         `;
@@ -432,6 +440,30 @@ export function renderPatrones() {
     });
     lista.querySelectorAll("[data-proy-patron]").forEach((b) => {
         b.addEventListener("click", () => crearProyectoDesdePatron(b.dataset.proyPatron));
+    });
+    lista.querySelectorAll("[data-exportar]").forEach((b) => {
+        b.addEventListener("click", () => {
+            const fila = b.closest(".item-card")?.querySelector(".export-row");
+            if (fila) fila.hidden = !fila.hidden;
+        });
+    });
+    lista.querySelectorAll("[data-export-pdf]").forEach((b) => {
+        b.addEventListener("click", () => {
+            const p = estado.patrones.find((x) => x.id === b.dataset.exportPdf);
+            if (p) imprimirPatron(p);
+        });
+    });
+    lista.querySelectorAll("[data-export-csv]").forEach((b) => {
+        b.addEventListener("click", () => {
+            const p = estado.patrones.find((x) => x.id === b.dataset.exportCsv);
+            if (p) descargarPatronCSV(p);
+        });
+    });
+    lista.querySelectorAll("[data-export-png]").forEach((b) => {
+        b.addEventListener("click", () => {
+            const p = estado.patrones.find((x) => x.id === b.dataset.exportPng);
+            if (p) descargarPatronPNG(p);
+        });
     });
     lista.querySelectorAll("[data-del-patron]").forEach((b) => {
         b.addEventListener("click", async () => {

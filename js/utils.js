@@ -84,7 +84,10 @@ export function irASeccion(nombre) {
     if (!seccion) return;
 
     document.querySelectorAll(".nav-btn").forEach((b) => {
-        b.classList.toggle("active", b.dataset.section === seccion);
+        const activo = b.dataset.section === seccion;
+        b.classList.toggle("active", activo);
+        if (activo) b.setAttribute("aria-current", "page");
+        else b.removeAttribute("aria-current");
     });
     document.querySelectorAll(".section").forEach((s) => {
         s.classList.toggle("active", s.id === `section-${seccion}`);

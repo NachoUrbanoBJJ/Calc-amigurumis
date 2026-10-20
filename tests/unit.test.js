@@ -7,6 +7,8 @@ import {
     calcularManoObra,
     calcularComponente,
     calcularTotalComponentes,
+    calcularPrecioIdeal,
+    calcularVenta,
 } from "../js/calculos.js";
 
 import {
@@ -18,6 +20,7 @@ import {
     crearProyecto,
     agregarSeccion,
     eliminarSeccion,
+    duplicarProyecto,
     agregarPatron,
     eliminarPatron,
     guardarProyectos,
@@ -54,6 +57,8 @@ import {
     guardarCategorias,
     cargarCategorias,
 } from "../js/categorias.js";
+
+import { escaparCampoCSV, proyectoACSV, patronACSV, nombreArchivoSeguro } from "../js/exportar.js";
 
 // ---------------------------------------------------------------------------
 // localStorage mínimo para los módulos que persisten datos
@@ -107,6 +112,39 @@ test("calcularTotalComponentes: suma los costos", () => {
     assert.equal(calcularTotalComponentes([]), 0);
 });
 
+test("calcularPrecioIdeal: costo + 50 % por defecto", () => {
+    assert.equal(calcularPrecioIdeal(100), 150);
+    assert.equal(calcularPrecioIdeal(0), 0);
+    assert.equal(calcularPrecioIdeal(-10), 0);
+    assert.equal(calcularPrecioIdeal(200, 25), 250);
+});
+
+test("calcularPrecioIdeal: margen inválido usa el 50 %", () => {
+    assert.equal(calcularPrecioIdeal(100, -5), 150);
+    assert.equal(calcularPrecioIdeal(100, "abc"), 150);
+});
+
+test("calcularVenta: el precio manual tiene prioridad", () => {
+    assert.deepEqual(calcularVenta(1000, 1500, 50), {
+        precioVenta: 1500,
+        ganancia: 500,
+        margen: 50,
+    });
+});
+
+test("calcularVenta: sin precio manual usa el margen", () => {
+    assert.deepEqual(calcularVenta(1000, null, 25), {
+        precioVenta: 1250,
+        ganancia: 250,
+        margen: 25,
+    });
+});
+
+test("calcularVenta: sin precio ni margen no inventa un precio", () => {
+    assert.deepEqual(calcularVenta(1000, "", ""), { precioVenta: 0, ganancia: 0, margen: 0 });
+    assert.deepEqual(calcularVenta(1000, 0, null), { precioVenta: 0, ganancia: 0, margen: 0 });
+});
+
 // ---------------------------------------------------------------------------
 // planificador.js — proyectos
 // ---------------------------------------------------------------------------
@@ -118,6 +156,7 @@ test("costoVacio: todos los campos en 0", () => {
         componentes: 0,
         manoObra: 0,
         total: 0,
+        precioIdeal: 0,
         precioVenta: 0,
         ganancia: 0,
         margen: 0,
@@ -130,11 +169,13 @@ test("normalizarProyecto: completa campos faltantes y define estado", () => {
     assert.equal(p.tipo, "amigurumi");
     assert.equal(p.estado, "planificando");
     assert.equal(p.costo.total, 0);
+    assert.equal(p.costo.precioIdeal, 0);
     assert.ok(Array.isArray(p.secciones));
     assert.ok(p.id);
 
     const conTotal = normalizarProyecto({ costo: { total: 100 } });
     assert.equal(conTotal.estado, "terminado");
+    assert.equal(conTotal.costo.precioIdeal, 150);
 });
 
 test("crearProyecto: proyecto nuevo vacío", () => {
@@ -166,6 +207,84 @@ test("guardarProyectos / cargarProyectos: ida y vuelta", () => {
     assert.equal(cargados.length, 1);
     assert.equal(cargados[0].nombre, "Osito");
     assert.equal(cargados[0].id, p.id);
+});
+
+test("duplicarProyecto: copia independiente con ids y fechas nuevas", () => {
+    const original = crearProyecto("Osito");
+    original.costo.total = 1000;
+    original.costo.precioIdeal = 1500;
+    agregarSeccion(original, { nombre: "Cabeza", puntos: 6, vueltas: 3, altura: 4 });
+    original.materialesUsados.lana = { color: "Rojo", marca: "Ovillos SA", gramosUsados: 50 };
+
+    const copia = duplicarProyecto(original);
+
+    assert.notEqual(copia.id, original.id);
+    assert.equal(copia.nombre, "Osito (copia)");
+    assert.equal(copia.secciones.length, 1);
+    assert.equal(copia.secciones[0].nombre, "Cabeza");
+    assert.notEqual(copia.secciones[0].id, original.secciones[0].id);
+    assert.equal(copia.costo.total, 1000);
+    assert.equal(copia.costo.precioIdeal, 1500);
+
+    copia.materialesUsados.lana.color = "Azul";
+    assert.equal(original.materialesUsados.lana.color, "Rojo");
+
+    copia.secciones[0].nombre = "Cabeza copia";
+    assert.equal(original.secciones[0].nombre, "Cabeza");
+});
+
+// ---------------------------------------------------------------------------
+// exportar.js — CSV
+// ---------------------------------------------------------------------------
+test("escaparCampoCSV: comillas, separador y saltos de línea", () => {
+    assert.equal(escaparCampoCSV("simple"), "simple");
+    assert.equal(escaparCampoCSV("con;separador"), '"con;separador"');
+    assert.equal(escaparCampoCSV('dice "hola"'), '"dice ""hola"""');
+    assert.equal(escaparCampoCSV("dos\nlíneas"), '"dos\nlíneas"');
+});
+
+test("nombreArchivoSeguro: quita caracteres inválidos y no queda vacío", () => {
+    const nombre = nombreArchivoSeguro('proyecto: "osito"/1');
+    assert.doesNotMatch(nombre, /[\\/:*?"<>|]/);
+    assert.ok(nombre.length > 0);
+    assert.equal(nombreArchivoSeguro("   "), "documento");
+});
+
+test("proyectoACSV: incluye costos, precio ideal, secciones y notas escapadas", () => {
+    const p = crearProyecto("Osito; grande");
+    p.costo = {
+        lanas: 100,
+        relleno: 20,
+        componentes: 30,
+        manoObra: 0,
+        total: 150,
+        precioIdeal: 225,
+        precioVenta: 0,
+        ganancia: 0,
+        margen: 0,
+    };
+    agregarSeccion(p, { nombre: "Cabeza", puntos: 6, vueltas: 3, altura: 4, notas: 'decir "hola"; suave' });
+
+    const csv = proyectoACSV(p);
+
+    assert.match(csv, /Nombre;"Osito; grande"/);
+    assert.match(csv, /Total;150,00/);
+    assert.match(csv, /Precio ideal \(\+50 %\);225,00/);
+    assert.match(csv, /Cabeza;6;3;4;"decir ""hola""; suave"/);
+});
+
+test("patronACSV: incluye materiales e instrucciones con saltos", () => {
+    const csv = patronACSV({
+        codigo: "PAT-0001",
+        nombre: "Osito",
+        categoria: "Amigurumi",
+        materiales: [{ nombre: "Lana", cantidad: 50, unidad: "g" }],
+        instrucciones: "Vuelta 1: 6 pb\nVuelta 2: aumento",
+    });
+
+    assert.match(csv, /Código;PAT-0001/);
+    assert.match(csv, /Lana;50;g/);
+    assert.match(csv, /"Vuelta 1: 6 pb\nVuelta 2: aumento"/);
 });
 
 // ---------------------------------------------------------------------------

@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="css/styles.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Amigurumis</title>
     <meta name="description" content="Calculá costos de amigurumis, guardá patrones, proyectos e inventario.">
-    <meta name="theme-color" content="#ff5c8a">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#b0184a">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -14,6 +14,19 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Amigurumis">
+    <script>
+        // Aplica el tema antes del primer pintado para evitar el "flash" blanco.
+        (function () {
+            try {
+                var config = JSON.parse(localStorage.getItem("calc-amigurumis-config-v1") || "{}");
+                var tema = config.tema === "claro" || config.tema === "oscuro" ? config.tema : "auto";
+                document.documentElement.setAttribute("data-tema", tema);
+            } catch (e) {
+                document.documentElement.setAttribute("data-tema", "auto");
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="css/styles.css">
     <script>
         // Manejador temprano de errores: si algo falla (incluso al cargar los
         // módulos), se avisa al usuario en vez de dejar la pantalla congelada.
@@ -35,19 +48,23 @@
     </script>
 </head>
 <body>
-    <div id="avisoGlobal" class="aviso-global" style="display:none;"></div>
+    <a class="skip-link" href="#contenidoPrincipal">Saltar al contenido</a>
+    <div id="avisoGlobal" class="aviso-global" style="display:none;" role="status" aria-live="polite"></div>
     <header class="header">
-        <h1>Calculadora de Amigurumis</h1>
-        <nav class="nav">
-            <button class="nav-btn active" data-section="calculadora">Calculadora</button>
-            <button class="nav-btn" data-section="inventario">Inventario</button>
-            <button class="nav-btn" data-section="planificador">Planificador</button>
-            <button class="nav-btn" data-section="patrones">Patrones</button>
-            <button class="nav-btn" data-section="backup">Backup</button>
+        <div class="header-top">
+            <h1>Calculadora de Amigurumis</h1>
+            <button type="button" id="btnTema" class="btn-tema" aria-label="Cambiar tema" title="Cambiar tema">🌓</button>
+        </div>
+        <nav class="nav" aria-label="Secciones principales">
+            <button type="button" class="nav-btn active" data-section="calculadora" aria-current="page">Calculadora</button>
+            <button type="button" class="nav-btn" data-section="inventario">Inventario</button>
+            <button type="button" class="nav-btn" data-section="planificador">Planificador</button>
+            <button type="button" class="nav-btn" data-section="patrones">Patrones</button>
+            <button type="button" class="nav-btn" data-section="backup">Backup</button>
         </nav>
     </header>
 
-    <main>
+    <main id="contenidoPrincipal" tabindex="-1">
     <section id="section-calculadora" class="section active">
     <div class="banner-proyecto" id="bannerProyecto" style="display:none;">
         <span>🧮 Calculando para: <strong id="bannerProyectoNombre"></strong></span>
@@ -58,22 +75,32 @@
         <h2>Lanas</h2>
 
     <div class="info">
-        <label for="colorLana">Color</label>
-        <input id="colorLana" type="text">
+        <div class="form-group">
+            <label for="colorLana">Color</label>
+            <input id="colorLana" type="text">
+        </div>
 
-        <label for="marcaLana">Marca de Lana</label>
-        <input id="marcaLana" type="text">
+        <div class="form-group">
+            <label for="marcaLana">Marca de Lana</label>
+            <input id="marcaLana" type="text">
+        </div>
 </div>
 
     <div class="calculo">
-        <label for="precioOvillo">Precio del Ovillo</label>
-        <input id="precioOvillo" type="number" step="0.01">
+        <div class="form-group">
+            <label for="precioOvillo">Precio del Ovillo</label>
+            <input id="precioOvillo" type="number" step="0.01">
+        </div>
 
-        <label for="gramosOvillo">Gramos del Ovillo</label>
-        <input id="gramosOvillo" type="number" step="0.01">
+        <div class="form-group">
+            <label for="gramosOvillo">Gramos del Ovillo</label>
+            <input id="gramosOvillo" type="number" step="0.01">
+        </div>
 
-        <label for="gramosUsados">Gramos Usados</label>
-        <input id="gramosUsados" type="number" step="0.01">
+        <div class="form-group">
+            <label for="gramosUsados">Gramos Usados</label>
+            <input id="gramosUsados" type="number" step="0.01">
+        </div>
     </div>
 </div>
 
@@ -81,22 +108,32 @@
         <h2>Relleno</h2>
 
         <div class="info">
-            <label for="tipoRelleno">Tipo de Relleno</label>
-            <input id="tipoRelleno" type="text">
+            <div class="form-group">
+                <label for="tipoRelleno">Tipo de Relleno</label>
+                <input id="tipoRelleno" type="text">
+            </div>
 
-            <label for="marcaRelleno">Marca</label>
-            <input id="marcaRelleno" type="text">
+            <div class="form-group">
+                <label for="marcaRelleno">Marca</label>
+                <input id="marcaRelleno" type="text">
+            </div>
         </div>
 
         <div class="calculo">
-            <label for="precioRelleno">Precio del Relleno</label>
-            <input id="precioRelleno" type="number">
+            <div class="form-group">
+                <label for="precioRelleno">Precio del Relleno</label>
+                <input id="precioRelleno" type="number">
+            </div>
 
-            <label for="gramosRelleno">Gramos totales</label>
-            <input id="gramosRelleno" type="number">
+            <div class="form-group">
+                <label for="gramosRelleno">Gramos totales</label>
+                <input id="gramosRelleno" type="number">
+            </div>
 
-            <label for="rellenoUsado">Relleno Usado</label>
-            <input id="rellenoUsado" type="number">
+            <div class="form-group">
+                <label for="rellenoUsado">Relleno Usado</label>
+                <input id="rellenoUsado" type="number">
+            </div>
 
         </div>
     </div>
@@ -105,29 +142,41 @@
 
         <h2>Componentes</h2>
 
-        <label for="tipoComponente">Componentes</label>
+        <div class="form-group">
+            <label for="tipoComponente">Componentes</label>
 
-        <select id="tipoComponente">
-            <option value="">Seleccionar...</option>
-        </select>
+            <select id="tipoComponente">
+                <option value="">Seleccionar...</option>
+            </select>
+        </div>
 
         <div id="datosComponentes">
 
-        <label for="cantidadComprada">Cantidad Comprada</label>
-        <input id="cantidadComprada" type="number">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="cantidadComprada">Cantidad Comprada</label>
+                <input id="cantidadComprada" type="number">
+            </div>
 
-        <label for="precioCompra">Precio de Compra</label>
-        <input id="precioCompra" type="number">
+            <div class="form-group">
+                <label for="precioCompra">Precio de Compra</label>
+                <input id="precioCompra" type="number">
+            </div>
 
-        <label for="cantidadUtilizada">Cantidad Usada</label>
-        <input id="cantidadUtilizada" type="number">
+            <div class="form-group">
+                <label for="cantidadUtilizada">Cantidad Usada</label>
+                <input id="cantidadUtilizada" type="number">
+            </div>
+        </div>
 
-        <button type="button" id="btnAgregarComponente">
-            Agregar Componente
-        </button>
-        <button type="button" id="btnCancelarEdicionComponenteCalc" class="btn-secundario" style="display:none;">
-            Cancelar edición
-        </button>
+        <div class="acciones-small">
+            <button type="button" id="btnAgregarComponente">
+                Agregar Componente
+            </button>
+            <button type="button" id="btnCancelarEdicionComponenteCalc" class="btn-secundario" style="display:none;">
+                Cancelar edición
+            </button>
+        </div>
         </div>
 
         <div id="listaComponentes"></div>
@@ -136,24 +185,37 @@
     <div class="manoObra">
         <h2>Mano de Obra</h2>
 
-        <label for="horasTrabajadas">Horas Trabajadas</label>
-        <input id="horasTrabajadas" type="number" step="0.1" min="0">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="horasTrabajadas">Horas Trabajadas (opcional)</label>
+                <input id="horasTrabajadas" type="number" step="0.1" min="0" placeholder="Ej: 4">
+            </div>
 
-        <label for="valorHoras">Valor por Hora</label>
-        <input id="valorHoras" type="number" step="0.01" min="0" placeholder="Ej: 3000 (se recuerda el último)">
+            <div class="form-group">
+                <label for="valorHoras">Valor por Hora (opcional)</label>
+                <input id="valorHoras" type="number" step="0.01" min="0" placeholder="Ej: 3000 (se recuerda el último)">
+            </div>
+        </div>
 
+        <p class="info-text">Si dejás el valor por hora vacío, el cálculo se hace igual y la mano de obra no se suma al total.</p>
     </div>
 
     <div class="venta">
         <h2>Precio de Venta</h2>
 
-        <label for="margenGanancia">Margen de Ganancia (%)</label>
-        <input id="margenGanancia" type="number" step="1" min="0" placeholder="Ej: 50">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="margenGanancia">Margen de Ganancia (%) — opcional</label>
+                <input id="margenGanancia" type="number" step="1" min="0" placeholder="Ej: 50">
+            </div>
 
-        <label for="precioVentaManual">Precio de Venta (opcional)</label>
-        <input id="precioVentaManual" type="number" step="0.01" min="0" placeholder="Ej: 5000 (tiene prioridad)">
+            <div class="form-group">
+                <label for="precioVentaManual">Precio de Venta (opcional)</label>
+                <input id="precioVentaManual" type="number" step="0.01" min="0" placeholder="Ej: 5000 (tiene prioridad)">
+            </div>
+        </div>
 
-        <p class="info-text">Si completás el precio de venta, se calcula la ganancia y el margen real. Si sólo ponés el margen, se calcula el precio a partir del costo.</p>
+        <p class="info-text">El margen y el precio son opcionales. Si no cargás ninguno, igual vas a ver un <strong>precio ideal sugerido</strong> (costo total + 50 %). Si cargás el precio manual, tiene prioridad sobre el margen.</p>
     </div>
 
     <div class="errores-calc" id="erroresCalculadora" style="display:none;"></div>
@@ -163,7 +225,7 @@
         <button type="button" id="btnLimpiar">Limpiar</button>
     </div>
 
-    <div class="resultados" id="resultados" style="display:none;">
+    <div class="resultados" id="resultados" style="display:none;" aria-live="polite">
         <h2>Resultados</h2>
 
         <div class="resultado-item">
@@ -186,6 +248,11 @@
             <span>Total General:</span>
             <span id="resTotal">$ 0,00</span>
         </div>
+        <div class="resultado-item resultado-ideal">
+            <span>Precio ideal (+50 %):</span>
+            <span id="resPrecioIdeal">$ 0,00</span>
+        </div>
+        <p class="info-text">El precio ideal es una referencia (costo total + 50 % de ganancia). Podés usar el margen o el precio manual para definir el tuyo.</p>
         <div class="resultado-item">
             <span>Precio de Venta:</span>
             <span id="resPrecioVenta">—</span>
@@ -198,6 +265,7 @@
             <span>Margen:</span>
             <span id="resMargen">—</span>
         </div>
+        <p id="avisoManoObra" class="info-text" style="display:none;"></p>
 
         <h3>Desglose de Componentes</h3>
         <div id="desgloseComponentes"></div>
@@ -497,9 +565,9 @@
                 <div class="form-group full-width">
                     <label>Materiales Necesarios</label>
                     <div class="material-row">
-                        <input type="text" id="patronMatNombre" placeholder="Material (Ej: Lana marrón)">
-                        <input type="number" id="patronMatCantidad" step="0.01" min="0" placeholder="Cant.">
-                        <input type="text" id="patronMatUnidad" list="unidadesMaterial" placeholder="Unidad">
+                        <input type="text" id="patronMatNombre" aria-label="Nombre del material" placeholder="Material (Ej: Lana marrón)">
+                        <input type="number" id="patronMatCantidad" step="0.01" min="0" aria-label="Cantidad del material" placeholder="Cant.">
+                        <input type="text" id="patronMatUnidad" list="unidadesMaterial" aria-label="Unidad del material" placeholder="Unidad">
                         <datalist id="unidadesMaterial">
                             <option value="g"></option>
                             <option value="kg"></option>
@@ -529,7 +597,7 @@
 
         <div class="card">
             <h3>Mis Patrones</h3>
-            <input type="text" id="patronBuscador" placeholder="🔍 Buscar por nombre o código (ej: PAT-0001)...">
+            <input type="text" id="patronBuscador" aria-label="Buscar patrones por nombre o código" placeholder="🔍 Buscar por nombre o código (ej: PAT-0001)...">
             <div id="patronCategorias" class="chips"></div>
             <p class="subtitulo" id="patronResumen"></p>
             <div id="listaPatrones" class="lista-items"></div>
@@ -551,7 +619,7 @@
     </main>
 
     <!-- Modal propio para reemplazar alert/confirm nativos -->
-    <div class="modal-contenedor" id="modalContenedor" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+    <div class="modal-contenedor" id="modalContenedor" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalTitulo" aria-describedby="modalMensaje">
         <div class="modal-caja">
             <h3 id="modalTitulo">Aviso</h3>
             <p id="modalMensaje"></p>

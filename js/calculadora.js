@@ -2,7 +2,14 @@ import { estado, cargarConfig, guardarConfig, aplicarValorHoraPorDefecto } from 
 import { escapeHtml, texto, num, valor } from "./utils.js";
 import { confirmar, mostrarAviso } from "./modal.js";
 import { mostrarComponente, formatearMoneda, mostrarListaComponentes, mostrarDesgloseComponentes } from "./ui.js";
-import { calcularLana, calcularRelleno, calcularManoObra, calcularTotalComponentes } from "./calculos.js";
+import {
+    calcularLana,
+    calcularRelleno,
+    calcularManoObra,
+    calcularTotalComponentes,
+    calcularPrecioIdeal,
+    calcularVenta,
+} from "./calculos.js";
 import { descontarLana, descontarRelleno, descontarComponentes, guardarInventario } from "./inventario.js";
 import { renderInventario } from "./inventario-ui.js";
 import { renderProyectos, renderBannerProyecto, obtenerProyectoSeleccionado } from "./planificador-ui.js";
@@ -166,35 +173,27 @@ async function agregarComponente() {
  * Fuente única de verdad para el coste (evita duplicar la fórmula).
  */
 function calcularCostoActual() {
+    // El valor por hora es opcional: si no está cargado, la mano de obra no se
+    // suma al total y la interfaz lo avisa (no bloquea el cálculo).
+    const horas = num("horasTrabajadas");
+    const valorHora = valor("valorHoras") !== "" ? num("valorHoras") : 0;
+
     const costo = {
         lanas: calcularLana(num("precioOvillo"), num("gramosOvillo"), num("gramosUsados")),
         relleno: calcularRelleno(num("precioRelleno"), num("gramosRelleno"), num("rellenoUsado")),
         componentes: calcularTotalComponentes(estado.componentes),
-        manoObra: calcularManoObra(num("horasTrabajadas"), num("valorHoras")),
+        manoObra: calcularManoObra(horas, valorHora),
     };
     costo.total = costo.lanas + costo.relleno + costo.componentes + costo.manoObra;
+    costo.precioIdeal = calcularPrecioIdeal(costo.total);
 
-    // Precio de venta y margen (el precio manual tiene prioridad sobre el margen)
+    // Precio de venta y margen (opcionales; el precio manual tiene prioridad).
     const margenIngresado = valor("margenGanancia") !== "" ? num("margenGanancia") : null;
     const precioManual = valor("precioVentaManual") !== "" ? num("precioVentaManual") : null;
-
-    let precioVenta = null;
-    if (precioManual !== null && precioManual > 0) {
-        precioVenta = precioManual;
-    } else if (margenIngresado !== null && margenIngresado >= 0) {
-        precioVenta = costo.total * (1 + margenIngresado / 100);
-    }
-
-    if (precioVenta !== null && precioVenta > 0) {
-        const ganancia = precioVenta - costo.total;
-        costo.precioVenta = Number(precioVenta.toFixed(2));
-        costo.ganancia = Number(ganancia.toFixed(2));
-        costo.margen = costo.total > 0 ? Number(((ganancia / costo.total) * 100).toFixed(2)) : 0;
-    } else {
-        costo.precioVenta = 0;
-        costo.ganancia = 0;
-        costo.margen = 0;
-    }
+    const venta = calcularVenta(costo.total, precioManual, margenIngresado);
+    costo.precioVenta = venta.precioVenta;
+    costo.ganancia = venta.ganancia;
+    costo.margen = venta.margen;
 
     const materialesUsados = {
         lana: { color: texto("colorLana"), marca: texto("marcaLana"), gramosUsados: num("gramosUsados") },
@@ -250,10 +249,9 @@ function validarCalculadora() {
         errores.push("Los gramos totales de relleno deben ser mayores a 0.");
     }
 
-    // Mano de obra: si hay horas, hace falta el valor por hora
-    if (num("horasTrabajadas") > 0 && (valor("valorHoras") === "" || num("valorHoras") <= 0)) {
-        errores.push("Completá el valor por hora (mayor a 0) para calcular la mano de obra.");
-    }
+    // Mano de obra: el valor por hora es opcional. Si hay horas pero no valor,
+    // se calcula igual y la mano de obra queda fuera del total (se avisa en
+    // los resultados). Sólo se valida que los números no sean negativos.
 
     // Sin datos
     const hayDatos =
@@ -307,12 +305,23 @@ async function calcularTodo() {
     }
 
     const { costo } = calcularCostoActual();
+    const horas = num("horasTrabajadas");
+    const sinValorHora = horas > 0 && valor("valorHoras") === "";
 
     document.getElementById("resLanas").textContent = formatearMoneda(costo.lanas);
     document.getElementById("resRelleno").textContent = formatearMoneda(costo.relleno);
     document.getElementById("resComponentes").textContent = formatearMoneda(costo.componentes);
-    document.getElementById("resManoObra").textContent = formatearMoneda(costo.manoObra);
+    document.getElementById("resManoObra").textContent = sinValorHora ? "—" : formatearMoneda(costo.manoObra);
     document.getElementById("resTotal").textContent = formatearMoneda(costo.total);
+    document.getElementById("resPrecioIdeal").textContent = formatearMoneda(costo.precioIdeal);
+
+    const avisoManoObra = document.getElementById("avisoManoObra");
+    if (avisoManoObra) {
+        avisoManoObra.style.display = sinValorHora ? "block" : "none";
+        avisoManoObra.textContent = sinValorHora
+            ? "ℹ️ No se sumó mano de obra porque el valor por hora está vacío. Podés cargarlo si querés incluirla."
+            : "";
+    }
 
     const hayVenta = costo.precioVenta > 0;
     document.getElementById("resPrecioVenta").textContent = hayVenta ? formatearMoneda(costo.precioVenta) : "—";
@@ -379,6 +388,12 @@ function limpiarTodo() {
 
     const avisoStock = document.getElementById("avisoStock");
     if (avisoStock) avisoStock.textContent = "";
+
+    const avisoManoObra = document.getElementById("avisoManoObra");
+    if (avisoManoObra) {
+        avisoManoObra.textContent = "";
+        avisoManoObra.style.display = "none";
+    }
 
     mostrarErroresCalculadora([]);
 

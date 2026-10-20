@@ -7,11 +7,24 @@ import { renderAll } from "./render.js";
 import { registrarServiceWorker } from "./pwa.js";
 import { EVENTO_ERROR_STORAGE } from "./almacenamiento.js";
 import { almacenamientoOk } from "./estado.js";
+import { iniciarTema } from "./tema.js";
 import "./calculadora.js";
 import "./inventario-ui.js";
 import "./planificador-ui.js";
 import "./patrones-ui.js";
 import "./backup.js";
+
+// ---------------------------------------------------------------------------
+// Mejoras de accesibilidad para móvil
+// ---------------------------------------------------------------------------
+// Teclado numérico en Android/iOS para los campos de números.
+document.querySelectorAll('input[type="number"]').forEach((input) => {
+    if (input.hasAttribute("inputmode")) return;
+    const entero = input.getAttribute("step") === "1" && !input.getAttribute("min")?.includes(".");
+    input.setAttribute("inputmode", entero ? "numeric" : "decimal");
+});
+
+iniciarTema();
 
 // ---------------------------------------------------------------------------
 // Navegación

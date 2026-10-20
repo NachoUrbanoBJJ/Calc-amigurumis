@@ -6,7 +6,14 @@ componentes y mano de obra), guardar patrones, planificar proyectos y administra
 ## Características
 
 - **Calculadora**: costo de lana, relleno, componentes y mano de obra + total automático.
+- **Valor por hora y margen opcionales**: si no cargás el valor por hora, el cálculo se hace igual y
+  la mano de obra queda fuera del total (con un aviso claro).
+- **Precio ideal sugerido**: siempre se muestra “Precio ideal (+50 %)”, calculado sobre lo gastado y
+  usado (costo total + 50 %), aunque no cargues margen ni precio.
 - **Precio de venta**: margen de ganancia (%) o precio manual (el manual tiene prioridad).
+- **Duplicar proyectos**: crea una copia independiente (nuevo id, secciones y fechas) al instante.
+- **Exportar**: cada proyecto y patrón se puede descargar en **PDF** (vista de impresión), **CSV**
+  (compatible con Excel es-AR) y **PNG** (resumen en imagen).
 - **Inventario**: lanas, rellenos y componentes con stock disponible; se pueden **editar y eliminar**.
 - **Alertas de stock**: cada material muestra `Sin stock` / `Stock bajo` y hay un resumen arriba.
 - **Descuento de stock**: al presionar _Calcular_ (con confirmación) se descuenta del inventario;
@@ -22,6 +29,10 @@ componentes y mano de obra), guardar patrones, planificar proyectos y administra
 - **Robustez**: guardado a prueba de fallos (avisa si el almacenamiento está lleno o bloqueado),
   sin descuentos de stock duplicados, avisos globales ante errores inesperados.
 - **UX**: diálogos propios (no `alert`/`confirm` del navegador) y la app recuerda la última sección.
+- **Accesibilidad y diseño**: foco visible, enlace “Saltar al contenido”, `aria-current` en la
+  navegación, etiquetas en todos los campos, teclado numérico en móvil (`inputmode`), controles de
+  44 px, contraste AA y **tema claro / oscuro / automático** (botón en el encabezado).
+- **Impresión**: estilos propios para que el PDF salga limpio (sin menús ni botones).
 - Moneda en **pesos argentinos (ARS)**. Validaciones de entrada y escapado de HTML.
 
 ## Requisitos
@@ -66,13 +77,15 @@ npm run preview
 ```
 Calcuadora/
 ├── css/
-│   └── styles.css          # Estilos (tema rosa)
+│   └── styles.css          # Sistema de diseño (tokens, temas claro/oscuro, print)
 ├── js/
 │   ├── calculos.js         # Lógica pura de cálculos (sin DOM)
 │   ├── ui.js               # Helpers de render de la interfaz
 │   ├── inventario.js       # Inventario + descuento de stock (datos)
 │   ├── categorias.js       # Categorías de componentes (datos + persistencia)
 │   ├── planificador.js     # Proyectos y patrones (datos + persistencia)
+│   ├── exportar.js         # Exportación a CSV, PDF (impresión) y PNG (canvas)
+│   ├── tema.js             # Tema claro / oscuro / automático
 │   ├── utils.js            # Utilidades de DOM y formato
 │   ├── estado.js           # Estado en memoria + configuración
 │   ├── calculadora.js      # Sección Calculadora
@@ -99,22 +112,25 @@ Calcuadora/
 
 ## Persistencia (localStorage)
 
-| Clave                                       | Contenido                                               |
-| ------------------------------------------- | ------------------------------------------------------- |
-| `calc-amigurumis-inventario-v1`             | Lanas, rellenos y componentes.                          |
-| `calc-amigurumis-proyectos-v2`              | Proyectos (planificando/terminados).                    |
-| `calc-amigurumis-patrones-v2`               | Patrones con código `PAT-000x`.                         |
-| `calc-amigurumis-config-v1`                 | Configuración (último valor por hora + última sección). |
-| `calc-amigurumis-categorias-componentes-v1` | Categorías de componentes.                              |
+| Clave                                       | Contenido                                                     |
+| ------------------------------------------- | ------------------------------------------------------------- |
+| `calc-amigurumis-inventario-v1`             | Lanas, rellenos y componentes.                                |
+| `calc-amigurumis-proyectos-v2`              | Proyectos (planificando/terminados).                          |
+| `calc-amigurumis-patrones-v2`               | Patrones con código `PAT-000x`.                               |
+| `calc-amigurumis-config-v1`                 | Configuración (tema, último valor por hora + última sección). |
+| `calc-amigurumis-categorias-componentes-v1` | Categorías de componentes.                                    |
 
 ## Estado actual
 
 Ver [`ROADMAP.md`](./ROADMAP.md). Resumen:
 
-- ✅ Bloques 0, 1, 2 y 3 (base, calculadora, features, persistencia).
+- ✅ Bloques 0, 1, **2 completo** y 3 (base, calculadora, features, persistencia).
 - ✅ Inventario, proyectos y patrones con búsqueda y mapeo.
 - ✅ PWA instalable (manifest + service worker + iconos).
 - ✅ Bloque R: robustez y manejo de errores.
 - ✅ Bloque U: modales propios, CRUD de inventario/componentes, avisos de stock y memoria de sección.
 - ✅ Bloque 2b: categorías de componentes editables (calculadora + inventario + backup).
-- ⬜ Bloques 4-7: pulido de UI, backup avanzado y empaquetado nativo (Capacitor).
+- ✅ Bloque 4: diseño (tokens, tipografía, espaciado), contraste AA, modo oscuro, accesibilidad,
+  impresión y mejoras móviles.
+- ⬜ Bloques 5-7: backup avanzado (v4 + recordatorios), sincronización y empaquetado nativo
+  (Capacitor).

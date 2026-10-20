@@ -11,6 +11,7 @@ function el(id) {
 
 let alResolverse = null;
 let manejadorTecla = null;
+let focoPrevio = null;
 
 function quitarTeclas() {
     if (manejadorTecla) {
@@ -23,6 +24,11 @@ function cerrar(valor) {
     const cont = el("modalContenedor");
     if (cont) cont.style.display = "none";
     quitarTeclas();
+
+    const anterior = focoPrevio;
+    focoPrevio = null;
+    if (anterior && typeof anterior.focus === "function") anterior.focus();
+
     const resolver = alResolverse;
     alResolverse = null;
     if (resolver) resolver(valor);
@@ -60,6 +66,7 @@ function abrirDialogo({ mensaje, titulo, okTexto, canceloTexto, permiteCancelar 
         }
 
         alResolverse = resolve;
+        focoPrevio = document.activeElement && document.activeElement !== document.body ? document.activeElement : null;
         cont.style.display = "flex";
 
         okEl.onclick = () => cerrar(true);
@@ -70,7 +77,18 @@ function abrirDialogo({ mensaje, titulo, okTexto, canceloTexto, permiteCancelar 
 
         quitarTeclas();
         manejadorTecla = (e) => {
-            if (e.key === "Enter") {
+            if (e.key === "Tab") {
+                const enfocables = [okEl, canceloEl].filter((boton) => boton.offsetParent !== null);
+                if (enfocables.length < 2) return;
+                const indice = enfocables.indexOf(document.activeElement);
+                e.preventDefault();
+                const siguiente = e.shiftKey
+                    ? enfocables[(indice <= 0 ? enfocables.length : indice) - 1]
+                    : enfocables[(indice + 1) % enfocables.length];
+                siguiente.focus();
+            } else if (e.key === "Enter") {
+                // Si el foco está en "Cancelar", dejamos que su click haga lo suyo.
+                if (document.activeElement === canceloEl) return;
                 e.preventDefault();
                 cerrar(true);
             } else if (e.key === "Escape" && permiteCancelar) {

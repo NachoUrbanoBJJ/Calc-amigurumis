@@ -1,8 +1,9 @@
 import { estado } from "./estado.js";
-import { escapeHtml, texto, irASeccion, formatearFecha } from "./utils.js";
+import { escapeHtml, texto, irASeccion, formatearFecha, mostrarAvisoGlobal } from "./utils.js";
 import { formatearMoneda } from "./ui.js";
-import { crearProyecto, guardarProyectos, agregarSeccion, eliminarSeccion } from "./planificador.js";
+import { crearProyecto, guardarProyectos, agregarSeccion, eliminarSeccion, duplicarProyecto } from "./planificador.js";
 import { confirmar, mostrarAviso } from "./modal.js";
+import { imprimirProyecto, descargarProyectoCSV, descargarProyectoPNG } from "./exportar.js";
 
 // ---------------------------------------------------------------------------
 // Proyecto seleccionado (destino del cálculo de la calculadora)
@@ -226,6 +227,17 @@ async function eliminarProyecto(id) {
     renderBannerProyecto();
 }
 
+function duplicarProyectoUI(id) {
+    const original = estado.proyectos.find((x) => x.id === id);
+    if (!original) return;
+
+    const copia = duplicarProyecto(original);
+    estado.proyectos.unshift(copia);
+    guardarProyectos(estado.proyectos);
+    renderProyectos();
+    mostrarAvisoGlobal(`Se duplicó "${original.nombre}". La copia quedó primero en la lista.`, "info");
+}
+
 // ---------------------------------------------------------------------------
 // Render
 // ---------------------------------------------------------------------------
@@ -266,7 +278,7 @@ export function renderProyectoActivo() {
     secciones.forEach((s) => {
         const div = document.createElement("div");
         div.className = "seccion-card";
-        div.innerHTML = `<div class="seccion-header"><span class="seccion-title">${escapeHtml(s.nombre)}</span><div class="item-actions"><button class="btn-danger" data-del-seccion="${s.id}">Eliminar</button></div></div><div class="seccion-details"><span><strong>Puntos:</strong> ${escapeHtml(s.puntos)}</span><span><strong>Vueltas/Filas:</strong> ${escapeHtml(s.vueltas)}</span><span><strong>Altura:</strong> ${escapeHtml(s.altura)}cm</span></div>${s.notas ? `<div class="seccion-notas">${escapeHtml(s.notas)}</div>` : ""}`;
+        div.innerHTML = `<div class="seccion-header"><span class="seccion-title">${escapeHtml(s.nombre)}</span><div class="item-actions"><button type="button" class="btn-danger" data-del-seccion="${s.id}">Eliminar</button></div></div><div class="seccion-details"><span><strong>Puntos:</strong> ${escapeHtml(s.puntos)}</span><span><strong>Vueltas/Filas:</strong> ${escapeHtml(s.vueltas)}</span><span><strong>Altura:</strong> ${escapeHtml(s.altura)}cm</span></div>${s.notas ? `<div class="seccion-notas">${escapeHtml(s.notas)}</div>` : ""}`;
         lista.appendChild(div);
     });
 
@@ -290,6 +302,7 @@ function renderDetalleProyecto(p) {
         <span>Componentes: ${formatearMoneda(costo.componentes)}</span>
         <span>Mano de obra: ${formatearMoneda(costo.manoObra)}</span>
         <span><strong>Total: ${formatearMoneda(costo.total)}</strong></span>
+        <span>Precio ideal (+50 %): ${formatearMoneda(costo.precioIdeal)}</span>
     </div>`;
 
     if (costo.precioVenta > 0) {
@@ -372,7 +385,15 @@ export function renderProyectos() {
                 <button type="button" data-revisar="${p.id}">${abierto ? "Ocultar" : "Revisar"}</button>
                 <button type="button" class="btn-secundario" data-editar="${p.id}">Editar</button>
                 <button type="button" class="btn-info" data-calcular="${p.id}">Calcular</button>
+                <button type="button" class="btn-secundario" data-exportar="${p.id}">Exportar</button>
+                <button type="button" class="btn-secundario" data-duplicar="${p.id}">Duplicar</button>
                 <button type="button" class="btn-danger" data-eliminar="${p.id}">Eliminar</button>
+            </div>
+            <div class="export-row" hidden>
+                <span class="export-label">Exportar:</span>
+                <button type="button" class="btn-secundario" data-export-pdf="${p.id}">PDF</button>
+                <button type="button" class="btn-secundario" data-export-csv="${p.id}">CSV (Excel)</button>
+                <button type="button" class="btn-secundario" data-export-png="${p.id}">PNG</button>
             </div>
             ${abierto ? renderDetalleProyecto(p) : ""}
         `;
@@ -391,4 +412,31 @@ export function renderProyectos() {
     lista
         .querySelectorAll("[data-eliminar]")
         .forEach((b) => b.addEventListener("click", () => eliminarProyecto(b.dataset.eliminar)));
+    lista
+        .querySelectorAll("[data-duplicar]")
+        .forEach((b) => b.addEventListener("click", () => duplicarProyectoUI(b.dataset.duplicar)));
+    lista.querySelectorAll("[data-exportar]").forEach((b) => {
+        b.addEventListener("click", () => {
+            const fila = b.closest(".item-card")?.querySelector(".export-row");
+            if (fila) fila.hidden = !fila.hidden;
+        });
+    });
+    lista.querySelectorAll("[data-export-pdf]").forEach((b) => {
+        b.addEventListener("click", () => {
+            const p = estado.proyectos.find((x) => x.id === b.dataset.exportPdf);
+            if (p) imprimirProyecto(p);
+        });
+    });
+    lista.querySelectorAll("[data-export-csv]").forEach((b) => {
+        b.addEventListener("click", () => {
+            const p = estado.proyectos.find((x) => x.id === b.dataset.exportCsv);
+            if (p) descargarProyectoCSV(p);
+        });
+    });
+    lista.querySelectorAll("[data-export-png]").forEach((b) => {
+        b.addEventListener("click", () => {
+            const p = estado.proyectos.find((x) => x.id === b.dataset.exportPng);
+            if (p) descargarProyectoPNG(p);
+        });
+    });
 }
