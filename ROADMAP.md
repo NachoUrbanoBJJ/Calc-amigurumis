@@ -131,6 +131,27 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ Borrar una categoría **no** modifica los materiales que ya la usan.
 - ✅ Las categorías entran en el backup completo (export/import; compatible con backups viejos).
 
+## Bloque S — Escalado por tamaño ✅
+
+Cálculo por medida para amigurumis (y piezas tejidas del mismo modelo): cargás un
+**modelo base** (tamaño, gramos de lana, gramos de relleno y horas) y el **tamaño
+deseado**, y la app estima cuánto material y tiempo lleva.
+
+- ✅ Fórmulas puras en `calculos.js`: `factorEscala()` y `escalarPorTamano()`
+- ✅ La lana crece con la **superficie** (~altura²), el relleno con el **volumen**
+  (~altura²·³, un poco más que la lana) y las horas con la **cantidad de puntos y
+  vueltas** (~altura^1,7)
+- ✅ Panel plegable cozy ("Escalar por tamaño") en la calculadora, con los factores aplicados
+  a la vista (×1,93 lana · ×2,13 relleno · ×1,75 horas)
+- ✅ Botón **"Usar estos valores"** que vuelca lana, relleno y horas al formulario para
+  recalcular el precio real
+- ✅ Validaciones (tamaños > 0) y aviso si faltan datos
+- ✅ **7 tests nuevos** (total 58) y cálculos verificados en el navegador
+
+**A tener en cuenta:** en piezas grandes el precio ideal (+50 %) puede superar el techo de
+mercado actual (~$45.900). Un osito de 25 cm da un ideal de ~$68.000, que es más de lo que
+hoy paga el mercado: conviene usarlo como piso de costo, no como precio final ciego.
+
 ## Bloque QA — Auditoría funcional + viabilidad de mercado ✅
 
 Test funcional completo en navegador (caso real: osito 18 cm) y contraste de los
@@ -218,7 +239,7 @@ solo se sostiene con piezas grandes, personalizadas o de marca.
 Bloque 0 → Bloque 1 → Bloque 4 (responsive/UI + modo oscuro) → Bloque 3 → Bloque 5 (PWA) →
 Bloque C (prolijidad) → Bloque R (robustez) → Bloque U (UX + CRUD) →
 Bloque 2 completo (features + exportaciones) → Bloque QA (auditoría + mercado) →
-Bloque 6 (Capacitor) → Bloque 7 (tienda)
+Bloque S (escalado por tamaño) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
 ```
 
 Primero que funcione (0–1), después que se vea bien (4), que no pierda datos (3),

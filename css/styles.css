@@ -843,6 +843,105 @@ main:focus {
     font-variant-numeric: tabular-nums;
 }
 
+/* --------------------------------------------------------------------------
+   Escalador por tamaño (panel plegable tipo hoja aparte)
+   -------------------------------------------------------------------------- */
+.escalador {
+    width: 100%;
+    max-width: 1000px;
+    margin: var(--esp-3) 0;
+    border: 1px dashed var(--borde-fuerte);
+    border-radius: 4px 18px 5px 16px / 16px 5px 18px 4px;
+    background-color: var(--superficie-2);
+    background-image:
+        linear-gradient(color-mix(in srgb, var(--lineas-trama) 55%, transparent) 1px, transparent 1px),
+        linear-gradient(90deg, color-mix(in srgb, var(--lineas-trama) 55%, transparent) 1px, transparent 1px);
+    background-size:
+        22px 22px,
+        22px 22px;
+    box-shadow: var(--sombra-1);
+}
+
+.escalador > summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.75rem;
+    padding: clamp(14px, 2.5vw, 20px) clamp(16px, 3vw, 28px);
+    cursor: pointer;
+    list-style: none;
+}
+
+.escalador > summary::-webkit-details-marker {
+    display: none;
+}
+
+.escalador > summary::after {
+    content: "▾";
+    margin-left: auto;
+    color: var(--primario);
+    font-size: 1.1rem;
+    transition: transform 0.2s ease;
+}
+
+.escalador[open] > summary::after {
+    transform: rotate(180deg);
+}
+
+.escalador-titulo {
+    font-family: var(--fuente-titulo);
+    color: var(--texto);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.escalador-hint {
+    color: var(--texto-suave);
+    font-family: var(--fuente-mano);
+    font-size: 1.05rem;
+}
+
+.escalador-cuerpo {
+    padding: 0 clamp(16px, 3vw, 28px) clamp(16px, 3vw, 24px);
+    border-top: 1px dashed var(--borde);
+}
+
+.acciones-escala {
+    justify-content: flex-start;
+    margin: var(--esp-3) 0 var(--esp-2);
+}
+
+.resultado-escala {
+    margin-top: var(--esp-2);
+    padding: var(--esp-2) var(--esp-3);
+    border: 1px solid var(--borde);
+    border-left: 4px solid var(--primario);
+    border-radius: 4px 14px 4px 12px;
+    background: var(--superficie);
+}
+
+.escala-encabezado {
+    margin-bottom: var(--esp-1);
+    color: var(--texto-suave);
+    font-size: 0.9rem;
+}
+
+.escala-encabezado strong {
+    color: var(--primario-texto);
+}
+
+.factor {
+    color: var(--texto-suave);
+    font-family: var(--fuente);
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+.escala-aviso {
+    color: var(--peligro);
+    font-size: 0.9rem;
+}
+
 #listaComponentes {
     margin-top: var(--esp-3);
 }

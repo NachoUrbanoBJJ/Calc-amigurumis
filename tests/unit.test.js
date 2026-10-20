@@ -9,6 +9,8 @@ import {
     calcularTotalComponentes,
     calcularPrecioIdeal,
     calcularVenta,
+    factorEscala,
+    escalarPorTamano,
 } from "../js/calculos.js";
 
 import {
@@ -143,6 +145,55 @@ test("calcularVenta: sin precio manual usa el margen", () => {
 test("calcularVenta: sin precio ni margen no inventa un precio", () => {
     assert.deepEqual(calcularVenta(1000, "", ""), { precioVenta: 0, ganancia: 0, margen: 0 });
     assert.deepEqual(calcularVenta(1000, 0, null), { precioVenta: 0, ganancia: 0, margen: 0 });
+});
+
+// ---------------------------------------------------------------------------
+// calculos.js — escalado por tamaño
+// ---------------------------------------------------------------------------
+test("factorEscala: mismo tamaño no cambia (1)", () => {
+    assert.equal(factorEscala(15, 15), 1);
+    assert.equal(factorEscala(15, 15, 2.3), 1);
+});
+
+test("factorEscala: la lana crece con la superficie (altura²)", () => {
+    // 15 -> 30 cm: doble altura, cuádruple superficie.
+    assert.equal(factorEscala(15, 30, 2), 4);
+    assert.equal(factorEscala(10, 20, 2), 4);
+});
+
+test("factorEscala: exponentes mayores crecen más fuerte (relleno > lana)", () => {
+    const lana = factorEscala(15, 30, 2);
+    const relleno = factorEscala(15, 30, 2.3);
+    assert.ok(relleno > lana);
+});
+
+test("factorEscala: datos inválidos devuelven escala neutra (1)", () => {
+    assert.equal(factorEscala(0, 20), 1);
+    assert.equal(factorEscala(15, 0), 1);
+    assert.equal(factorEscala("abc", 20), 1);
+    assert.equal(factorEscala(-5, 20), 1);
+});
+
+test("escalarPorTamano: 15 -> 30 cm cuadruplica lana y horas suben ~1,7", () => {
+    const r = escalarPorTamano(15, 30, { gramosLana: 40, gramosRelleno: 60, horas: 5 });
+    assert.equal(r.gramosLana, 160); // 40 × 4
+    assert.equal(r.factores.lana, 4);
+    assert.ok(r.horas > 5 * 3 && r.horas < 5 * 4); // 2^1,7 ≈ 3,25
+    assert.ok(r.gramosRelleno > r.gramosLana); // el relleno crece más
+});
+
+test("escalarPorTamano: tamaños iguales no alteran los valores", () => {
+    const r = escalarPorTamano(18, 18, { gramosLana: 55, gramosRelleno: 90, horas: 5 });
+    assert.equal(r.gramosLana, 55);
+    assert.equal(r.gramosRelleno, 90);
+    assert.equal(r.horas, 5);
+});
+
+test("escalarPorTamano: sin valores cargados devuelve 0 sin romper", () => {
+    const r = escalarPorTamano(15, 20, {});
+    assert.equal(r.gramosLana, 0);
+    assert.equal(r.gramosRelleno, 0);
+    assert.equal(r.horas, 0);
 });
 
 // ---------------------------------------------------------------------------

@@ -200,6 +200,54 @@
         <p class="info-text">Si dejás el valor por hora vacío, el cálculo se hace igual y la mano de obra no se suma al total.</p>
     </div>
 
+    <details class="escalador" id="escaladorTamano">
+        <summary>
+            <span class="escalador-titulo">Escalar por tamaño</span>
+            <span class="escalador-hint">¿Cuánto sale en otro tamaño?</span>
+        </summary>
+
+        <div class="escalador-cuerpo">
+            <p class="info-text">
+                Cargá un modelo base (el que ya tejiste o tenés medido) y el tamaño que querés hacer:
+                la app estima la lana, el relleno y las horas, y podés aplicarlos al formulario.
+            </p>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="escalaTamanoBase">Tamaño base (cm)</label>
+                    <input id="escalaTamanoBase" type="number" step="0.5" min="1" placeholder="Ej: 18">
+                </div>
+
+                <div class="form-group">
+                    <label for="escalaTamanoDestino">Tamaño deseado (cm)</label>
+                    <input id="escalaTamanoDestino" type="number" step="0.5" min="1" placeholder="Ej: 25">
+                </div>
+
+                <div class="form-group">
+                    <label for="escalaGramosLana">Lana del modelo base (g)</label>
+                    <input id="escalaGramosLana" type="number" step="1" min="0" placeholder="Ej: 55">
+                </div>
+
+                <div class="form-group">
+                    <label for="escalaGramosRelleno">Relleno del modelo base (g)</label>
+                    <input id="escalaGramosRelleno" type="number" step="1" min="0" placeholder="Ej: 90">
+                </div>
+
+                <div class="form-group">
+                    <label for="escalaHoras">Horas del modelo base</label>
+                    <input id="escalaHoras" type="number" step="0.5" min="0" placeholder="Ej: 5">
+                </div>
+            </div>
+
+            <div class="acciones acciones-escala">
+                <button type="button" id="btnEscalar" class="btn-secundario">Calcular escalado</button>
+                <button type="button" id="btnUsarEscala" class="btn-secundario" style="display:none;">Usar estos valores</button>
+            </div>
+
+            <div id="resultadoEscala" class="resultado-escala" style="display:none;" aria-live="polite"></div>
+        </div>
+    </details>
+
     <div class="venta">
         <h2>Precio de Venta</h2>
 

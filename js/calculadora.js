@@ -1,5 +1,5 @@
 import { estado, cargarConfig, guardarConfig, aplicarValorHoraPorDefecto } from "./estado.js";
-import { escapeHtml, texto, num, valor } from "./utils.js";
+import { escapeHtml, texto, num, valor, mostrarAvisoGlobal } from "./utils.js";
 import { confirmar, mostrarAviso } from "./modal.js";
 import { mostrarComponente, formatearMoneda, mostrarListaComponentes, mostrarDesgloseComponentes } from "./ui.js";
 import {
@@ -9,6 +9,7 @@ import {
     calcularTotalComponentes,
     calcularPrecioIdeal,
     calcularVenta,
+    escalarPorTamano,
 } from "./calculos.js";
 import { descontarLana, descontarRelleno, descontarComponentes, guardarInventario } from "./inventario.js";
 import { renderInventario } from "./inventario-ui.js";
@@ -38,6 +39,11 @@ const btnCancelarEdicionComponenteCalc = document.getElementById("btnCancelarEdi
 if (btnCancelarEdicionComponenteCalc) {
     btnCancelarEdicionComponenteCalc.addEventListener("click", () => cancelarEdicionComponente());
 }
+
+const btnEscalar = document.getElementById("btnEscalar");
+if (btnEscalar) btnEscalar.addEventListener("click", calcularEscala);
+const btnUsarEscala = document.getElementById("btnUsarEscala");
+if (btnUsarEscala) btnUsarEscala.addEventListener("click", usarEscala);
 
 // ---------------------------------------------------------------------------
 // Componentes (alta, edición y baja)
@@ -296,6 +302,84 @@ function mostrarErroresCalculadora(errores) {
     cont.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
+// ---------------------------------------------------------------------------
+// Escalado por tamaño
+// ---------------------------------------------------------------------------
+let ultimaEscala = null;
+
+function pintarEscala(resultado, base, destino) {
+    const cont = document.getElementById("resultadoEscala");
+    const btnUsar = document.getElementById("btnUsarEscala");
+    if (!cont) return;
+
+    if (!resultado) {
+        cont.style.display = "none";
+        cont.innerHTML = "";
+        if (btnUsar) btnUsar.style.display = "none";
+        return;
+    }
+
+    const fila = (etiqueta, valor, factor) =>
+        `<div class="resultado-item"><span>${escapeHtml(etiqueta)}:</span><span>${escapeHtml(valor)} <small class="factor">×${factor}</small></span></div>`;
+
+    cont.innerHTML =
+        `<div class="escala-encabezado">De <strong>${escapeHtml(base)} cm</strong> a <strong>${escapeHtml(destino)} cm</strong></div>` +
+        fila("Lana estimada", `${resultado.gramosLana} g`, resultado.factores.lana) +
+        fila("Relleno estimado", `${resultado.gramosRelleno} g`, resultado.factores.relleno) +
+        fila("Horas estimadas", `${resultado.horas} h`, resultado.factores.horas);
+    cont.style.display = "block";
+
+    if (btnUsar) btnUsar.style.display = "";
+}
+
+function calcularEscala() {
+    const base = num("escalaTamanoBase");
+    const destino = num("escalaTamanoDestino");
+
+    if (base <= 0 || destino <= 0) {
+        ultimaEscala = null;
+        pintarEscala(null);
+        mostrarAvisoEscala("Cargá el tamaño base y el tamaño deseado (mayores a 0).");
+        return;
+    }
+
+    const resultado = escalarPorTamano(base, destino, {
+        gramosLana: num("escalaGramosLana"),
+        gramosRelleno: num("escalaGramosRelleno"),
+        horas: num("escalaHoras"),
+    });
+
+    ultimaEscala = { resultado, base, destino };
+    pintarEscala(resultado, base, destino);
+}
+
+function mostrarAvisoEscala(mensaje) {
+    const cont = document.getElementById("resultadoEscala");
+    if (!cont) return;
+    cont.innerHTML = `<div class="escala-aviso">${escapeHtml(mensaje)}</div>`;
+    cont.style.display = "block";
+    const btnUsar = document.getElementById("btnUsarEscala");
+    if (btnUsar) btnUsar.style.display = "none";
+}
+
+function usarEscala() {
+    if (!ultimaEscala) return;
+    const r = ultimaEscala.resultado;
+
+    const asignar = (id, v) => {
+        const el = document.getElementById(id);
+        if (el) el.value = v;
+    };
+    if (r.gramosLana > 0) asignar("gramosUsados", r.gramosLana);
+    if (r.gramosRelleno > 0) asignar("rellenoUsado", r.gramosRelleno);
+    if (r.horas > 0) asignar("horasTrabajadas", r.horas);
+
+    const detalle = document.getElementById("escaladorTamano");
+    if (detalle && typeof detalle.open === "boolean") detalle.open = false;
+
+    mostrarAvisoGlobal("Valores escalados aplicados. Revisá y tocá Calcular.", "info");
+}
+
 async function calcularTodo() {
     const errores = validarCalculadora();
     mostrarErroresCalculadora(errores);
@@ -368,10 +452,18 @@ function limpiarTodo() {
         "nombreProyectoCalc",
         "margenGanancia",
         "precioVentaManual",
+        "escalaTamanoBase",
+        "escalaTamanoDestino",
+        "escalaGramosLana",
+        "escalaGramosRelleno",
+        "escalaHoras",
     ].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = "";
     });
+
+    ultimaEscala = null;
+    pintarEscala(null);
 
     aplicarValorHoraPorDefecto();
 

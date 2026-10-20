@@ -14,6 +14,9 @@ componentes y mano de obra), guardar patrones, planificar proyectos y administra
 - **Duplicar proyectos**: crea una copia independiente (nuevo id, secciones y fechas) al instante.
 - **Exportar**: cada proyecto y patrón se puede descargar en **PDF** (vista de impresión), **CSV**
   (compatible con Excel es-AR) y **PNG** (resumen en imagen).
+- **Escalar por tamaño**: cargás un modelo base (tamaño, lana, relleno y horas) y el tamaño
+  deseado; la app estima el material y las horas (lana ~altura², relleno ~altura²·³, horas
+  ~altura^1,7) y podés aplicarlos al formulario.
 - **Inventario**: lanas, rellenos y componentes con stock disponible; se pueden **editar y eliminar**.
 - **Alertas de stock**: cada material muestra `Sin stock` / `Stock bajo` y hay un resumen arriba.
 - **Descuento de stock**: al presionar _Calcular_ (con confirmación) se descuenta del inventario;
@@ -138,6 +141,7 @@ Ver [`ROADMAP.md`](./ROADMAP.md). Resumen:
   oscuro, accesibilidad, impresión y mejoras móviles.
 - ✅ Bloque QA: auditoría funcional completa (cálculos, guardado, stock, exportación, backup)
   y contraste de precios contra el mercado real argentino.
+- ✅ Bloque S: escalado por tamaño (lana por superficie, relleno por volumen, horas por puntos).
 - ⬜ Bloques 5-7: backup avanzado (v4 + recordatorios), sincronización y empaquetado nativo
   (Capacitor).
 
