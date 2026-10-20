@@ -134,7 +134,20 @@ Ver [`ROADMAP.md`](./ROADMAP.md). Resumen:
 - ✅ Bloque R: robustez y manejo de errores.
 - ✅ Bloque U: modales propios, CRUD de inventario/componentes, avisos de stock y memoria de sección.
 - ✅ Bloque 2b: categorías de componentes editables (calculadora + inventario + backup).
-- ✅ Bloque 4: diseño (tokens, tipografía, espaciado), contraste AA, modo oscuro, accesibilidad,
-  impresión y mejoras móviles.
+- ✅ Bloque 4: diseño cozy (cuaderno/diario tejido, tipografías locales), contraste AA, modo
+  oscuro, accesibilidad, impresión y mejoras móviles.
+- ✅ Bloque QA: auditoría funcional completa (cálculos, guardado, stock, exportación, backup)
+  y contraste de precios contra el mercado real argentino.
 - ⬜ Bloques 5-7: backup avanzado (v4 + recordatorios), sincronización y empaquetado nativo
   (Capacitor).
+
+## Precios y mercado (referencia)
+
+Con datos reales de Argentina (octubre 2026), un amigurumi de 17–22 cm con ~5 h de
+trabajo tiene un **costo total de $23.000–$28.000** y un **precio ideal (+50 %) de
+$35.000–$42.000**, que cae dentro del **rango real de mercado ($8.000–$45.900, mediana
+≈ $28.000)**. El valor hora de referencia del rubro textil es **$3.231–$3.739/h**
+(convenio AOT-FITA); para trabajo artesanal a medida conviene **$4.000–$4.500/h**.
+
+> Si no cargás el valor hora, la calculadora **no** suma mano de obra y te avisa: el
+> resultado queda por debajo del mercado y estarías regalando tu trabajo.

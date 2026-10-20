@@ -131,6 +131,57 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ Borrar una categoría **no** modifica los materiales que ya la usan.
 - ✅ Las categorías entran en el backup completo (export/import; compatible con backups viejos).
 
+## Bloque QA — Auditoría funcional + viabilidad de mercado ✅
+
+Test funcional completo en navegador (caso real: osito 18 cm) y contraste de los
+números contra precios reales de mercado en Argentina (octubre 2026).
+
+**Funcional (todo ✅):**
+
+- ✅ Cálculos: lana, relleno, componentes, mano de obra y total exactos al centavo
+- ✅ Precio ideal (+50 %) siempre visible; margen y precio manual opcionales con prioridad
+  manual > margen
+- ✅ Mano de obra opcional: sin valor hora avisa y **no** bloquea el cálculo
+- ✅ Guardado de proyectos y **persistencia tras recargar** (costo, precio ideal y materiales intactos)
+- ✅ Inventario: alta de lanas, rellenos y componentes (con categorías)
+- ✅ **Descuento de stock con confirmación** y aviso preciso ("descontado X · faltaba Y")
+- ✅ **Sin doble descuento** al apretar _Calcular_ dos veces
+- ✅ Patrones: crear, código `PAT-NNNN`, "Crear proyecto desde patrón", duplicar
+- ✅ Exportación CSV (BOM + `;` + coma decimal, abre en Excel es-AR) e impresión PDF
+- ✅ Backup round-trip: export → borrar todo → import → **restaura proyectos, inventario,
+  patrones y categorías**
+- ✅ Validaciones: división por cero, negativos y "sin datos" con mensajes claros
+- ✅ **51/51 tests** unitarios, `lint`, `format:check` y `build` OK
+
+**Hallazgos / pendientes detectados:**
+
+- ⬜ El backup es **v3** y **no incluye la config** (tema y valor hora por defecto) → futuro **v4**
+- ℹ️ `canvas.toBlob` no dispara el callback en el navegador headless de automatización
+  (limitación del entorno, no de la app); en navegador real el PNG exporta bien y hay
+  fallback a `toDataURL`
+- ℹ️ Los datos del formulario de la calculadora **no persisten al recargar** (por diseño:
+  se guardan como proyecto). Evaluar si conviene un borrador automático.
+- ℹ️ La coincidencia de material para descontar stock es **estricta por texto**: si escribís
+  "rosa" y en el inventario dice "Rosa palo" puede no coincidir. Ya hay tolerancia parcial;
+  se podría mejorar con desplegable de materiales disponibles.
+
+**Viabilidad de mercado (ARS, octubre 2026):**
+
+Rango real relevado (osito/conejo 17–22 cm hecho a mano): **$8.000 – $45.900**,
+mediana ≈ **$28.000**.
+
+| Escenario (osito 18 cm, 5 h de trabajo) | Costo total | Precio ideal (+50 %) | ¿Cierra con el mercado?         |
+| --------------------------------------- | ----------- | -------------------- | ------------------------------- |
+| Hora de **convenio textil** ($3.600/h)  | $23.755     | $35.633              | ✅ Sí (mercado premium $30–33k) |
+| Hora **real de mercado** ($4.500/h)     | $28.255     | $42.383              | ⚠️ Justo (techo del mercado)    |
+| Hora **de modista** ($15.932/h)         | $85.415     | $128.123             | ❌ No (el mercado no paga eso)  |
+| **Sin** cobrar mano de obra             | $5.755      | $8.633               | ❌ Regalás el trabajo           |
+
+Conclusión: con valor hora entre **$3.600 y $4.500** y un modelo de 17–22 cm que lleve
+~5 h, el precio ideal que sugiere la app ($35–42k) está **en el rango real del mercado**
+(mediana $28k, premium hasta $45.9k). Por debajo de eso se trabaja a pérdida; arriba
+solo se sostiene con piezas grandes, personalizadas o de marca.
+
 ## Bloque 6 — App Android nativa (Capacitor) 📱
 
 - ⬜ Instalar Android Studio + JDK
@@ -166,7 +217,8 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 ```
 Bloque 0 → Bloque 1 → Bloque 4 (responsive/UI + modo oscuro) → Bloque 3 → Bloque 5 (PWA) →
 Bloque C (prolijidad) → Bloque R (robustez) → Bloque U (UX + CRUD) →
-Bloque 2 completo (features + exportaciones) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
+Bloque 2 completo (features + exportaciones) → Bloque QA (auditoría + mercado) →
+Bloque 6 (Capacitor) → Bloque 7 (tienda)
 ```
 
 Primero que funcione (0–1), después que se vea bien (4), que no pierda datos (3),
