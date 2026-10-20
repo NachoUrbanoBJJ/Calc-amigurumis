@@ -70,41 +70,55 @@
         <span>🧮 Calculando para: <strong id="bannerProyectoNombre"></strong></span>
         <button type="button" id="btnQuitarProyectoSeleccionado" class="btn-link">Quitar</button>
     </div>
-    <div class="lanas">
 
+    <div class="card modo-calculo">
+        <h2>¿Cómo querés calcular?</h2>
+        <div class="modo-selector">
+            <label class="modo-option">
+                <input type="radio" name="modoCalculo" value="materiales" checked>
+                <span>Por materiales utilizados</span>
+            </label>
+            <label class="modo-option">
+                <input type="radio" name="modoCalculo" value="tamaño">
+                <span>Por tamaño (escalar modelo base)</span>
+            </label>
+        </div>
+        <p class="info-text">Elegí el modo que prefieras. En ambos casos podés cargar mano de obra, componentes, precio de venta y guardar el proyecto.</p>
+    </div>
+    <div class="lanas" id="bloqueLanas">
         <h2>Lanas</h2>
 
-    <div class="info">
-        <div class="form-group">
-            <label for="colorLana">Color</label>
-            <input id="colorLana" type="text">
+        <div class="info">
+            <div class="form-group">
+                <label for="colorLana">Color</label>
+                <input id="colorLana" type="text">
+            </div>
+
+            <div class="form-group">
+                <label for="marcaLana">Marca de Lana</label>
+                <input id="marcaLana" type="text">
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="marcaLana">Marca de Lana</label>
-            <input id="marcaLana" type="text">
-        </div>
-</div>
+        <div class="calculo">
+            <div class="form-group">
+                <label for="precioOvillo">Precio del Ovillo</label>
+                <input id="precioOvillo" type="number" step="0.01">
+            </div>
 
-    <div class="calculo">
-        <div class="form-group">
-            <label for="precioOvillo">Precio del Ovillo</label>
-            <input id="precioOvillo" type="number" step="0.01">
-        </div>
+            <div class="form-group">
+                <label for="gramosOvillo">Gramos del Ovillo</label>
+                <input id="gramosOvillo" type="number" step="0.01">
+            </div>
 
-        <div class="form-group">
-            <label for="gramosOvillo">Gramos del Ovillo</label>
-            <input id="gramosOvillo" type="number" step="0.01">
-        </div>
-
-        <div class="form-group">
-            <label for="gramosUsados">Gramos Usados</label>
-            <input id="gramosUsados" type="number" step="0.01">
+            <div class="form-group">
+                <label for="gramosUsados">Gramos Usados</label>
+                <input id="gramosUsados" type="number" step="0.01">
+            </div>
         </div>
     </div>
-</div>
 
-    <div class="relleno">
+    <div class="relleno" id="bloqueRelleno">
         <h2>Relleno</h2>
 
         <div class="info">
@@ -199,54 +213,85 @@
 
         <p class="info-text">Si dejás el valor por hora vacío, el cálculo se hace igual y la mano de obra no se suma al total.</p>
     </div>
+        <h2>Calcular por tamaño</h2>
+        <p class="subtitulo">Cargá un modelo base que ya tengas (o el de referencia) y el tamaño que querés hacer.</p>
 
-    <details class="escalador" id="escaladorTamano">
-        <summary>
-            <span class="escalador-titulo">Escalar por tamaño</span>
-            <span class="escalador-hint">¿Cuánto sale en otro tamaño?</span>
-        </summary>
-
-        <div class="escalador-cuerpo">
-            <p class="info-text">
-                Cargá un modelo base (el que ya tejiste o tenés medido) y el tamaño que querés hacer:
-                la app estima la lana, el relleno y las horas, y podés aplicarlos al formulario.
-            </p>
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="escalaTamanoBase">Tamaño base (cm)</label>
-                    <input id="escalaTamanoBase" type="number" step="0.5" min="1" placeholder="Ej: 18">
-                </div>
-
-                <div class="form-group">
-                    <label for="escalaTamanoDestino">Tamaño deseado (cm)</label>
-                    <input id="escalaTamanoDestino" type="number" step="0.5" min="1" placeholder="Ej: 25">
-                </div>
-
-                <div class="form-group">
-                    <label for="escalaGramosLana">Lana del modelo base (g)</label>
-                    <input id="escalaGramosLana" type="number" step="1" min="0" placeholder="Ej: 55">
-                </div>
-
-                <div class="form-group">
-                    <label for="escalaGramosRelleno">Relleno del modelo base (g)</label>
-                    <input id="escalaGramosRelleno" type="number" step="1" min="0" placeholder="Ej: 90">
-                </div>
-
-                <div class="form-group">
-                    <label for="escalaHoras">Horas del modelo base</label>
-                    <input id="escalaHoras" type="number" step="0.5" min="0" placeholder="Ej: 5">
-                </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="escalaTamanoBase">Tamaño base (cm)</label>
+                <input id="escalaTamanoBase" type="number" step="0.5" min="1" placeholder="Ej: 18">
             </div>
-
-            <div class="acciones acciones-escala">
-                <button type="button" id="btnEscalar" class="btn-secundario">Calcular escalado</button>
-                <button type="button" id="btnUsarEscala" class="btn-secundario" style="display:none;">Usar estos valores</button>
+            <div class="form-group">
+                <label for="escalaTamanoDestino">Tamaño deseado (cm)</label>
+                <input id="escalaTamanoDestino" type="number" step="0.5" min="1" placeholder="Ej: 25">
             </div>
-
-            <div id="resultadoEscala" class="resultado-escala" style="display:none;" aria-live="polite"></div>
         </div>
-    </details>
+
+        <h3>Materiales y horas del modelo base</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="escalaGramosLana">Lana del modelo base (g)</label>
+                <input id="escalaGramosLana" type="number" step="1" min="0" placeholder="Ej: 55">
+            </div>
+            <div class="form-group">
+                <label for="escalaGramosRelleno">Relleno del modelo base (g)</label>
+                <input id="escalaGramosRelleno" type="number" step="1" min="0" placeholder="Ej: 90">
+            </div>
+            <div class="form-group">
+                <label for="escalaHoras">Horas del modelo base</label>
+                <input id="escalaHoras" type="number" step="0.5" min="0" placeholder="Ej: 5">
+            </div>
+        </div>
+
+        <h3>Precio de referencia</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="precioOvilloEscala">Precio del ovillo ($)</label>
+                <input id="precioOvilloEscala" type="number" step="0.01" min="0" placeholder="Ej: 6500">
+            </div>
+            <div class="form-group">
+                <label for="gramosOvilloEscala">Gramos del ovillo</label>
+                <input id="gramosOvilloEscala" type="number" step="0.01" min="0" placeholder="Ej: 100">
+            </div>
+            <div class="form-group">
+                <label for="precioRellenoEscala">Precio del relleno ($)</label>
+                <input id="precioRellenoEscala" type="number" step="0.01" min="0" placeholder="Ej: 9000">
+            </div>
+            <div class="form-group">
+                <label for="gramosRellenoEscala">Gramos totales del relleno</label>
+                <input id="gramosRellenoEscala" type="number" step="0.01" min="0" placeholder="Ej: 500">
+            </div>
+            <div class="form-group">
+                <label for="valorHorasEscala">Valor por hora ($)</label>
+                <input id="valorHorasEscala" type="number" step="0.01" min="0" placeholder="Ej: 4000">
+            </div>
+        </div>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="colorLanaEscala">Color (opcional)</label>
+                <input id="colorLanaEscala" type="text" placeholder="Ej: Rosa palo">
+            </div>
+            <div class="form-group">
+                <label for="marcaLanaEscala">Marca de lana (opcional)</label>
+                <input id="marcaLanaEscala" type="text" placeholder="Ej: Mia Amelie">
+            </div>
+            <div class="form-group">
+                <label for="tipoRellenoEscala">Tipo de relleno (opcional)</label>
+                <input id="tipoRellenoEscala" type="text" placeholder="Ej: Vellón siliconado">
+            </div>
+            <div class="form-group">
+                <label for="marcaRellenoEscala">Marca de relleno (opcional)</label>
+                <input id="marcaRellenoEscala" type="text" placeholder="Ej: Fibrante">
+            </div>
+        </div>
+
+        <div class="acciones acciones-escala">
+            <button type="button" id="btnCalcularPorTamaño">Calcular por tamaño</button>
+        </div>
+
+        <p class="info-text">Lana ~altura² · Relleno ~altura²·³ · Horas ~altura^1,7. Los componentes podés sumarlos en la sección "Componentes" o después del cálculo.</p>
+    </div>
 
     <div class="venta">
         <h2>Precio de Venta</h2>
@@ -314,6 +359,7 @@
             <span id="resMargen">—</span>
         </div>
         <p id="avisoManoObra" class="info-text" style="display:none;"></p>
+        <p id="resMetadatos" class="info-text"></p>
 
         <h3>Desglose de Componentes</h3>
         <div id="desgloseComponentes"></div>
@@ -487,6 +533,10 @@
                         <option value="otro">Otro</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="planTamanoProyecto">Tamaño (cm) — opcional</label>
+                    <input type="number" id="planTamanoProyecto" step="0.5" min="0" placeholder="Ej: 25">
+                </div>
                 <div class="form-group full-width">
                     <label for="planNotasProyecto">Notas Generales</label>
                     <textarea id="planNotasProyecto" rows="3" placeholder="Notas, referencias, patrón, etc..."></textarea>
@@ -518,6 +568,10 @@
                         <option value="prenda">Prenda de Ropa</option>
                         <option value="otro">Otro</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label for="editTamanoProyecto">Tamaño (cm) — opcional</label>
+                    <input type="number" id="editTamanoProyecto" step="0.5" min="0" placeholder="Ej: 25">
                 </div>
                 <div class="form-group full-width">
                     <label for="editNotasProyecto">Notas</label>

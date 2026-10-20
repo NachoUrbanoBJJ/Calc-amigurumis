@@ -62,6 +62,11 @@ if (btnCrearProyecto) {
             document.getElementById("planTipoProyecto").value,
             texto("planNotasProyecto")
         );
+        const tamanoInput = document.getElementById("planTamanoProyecto");
+        if (tamanoInput) {
+            const t = Number(tamanoInput.value);
+            nuevo.tamano = Number.isFinite(t) && t > 0 ? t : null;
+        }
         estado.proyectos.unshift(nuevo);
         guardarProyectos(estado.proyectos);
 
@@ -71,6 +76,7 @@ if (btnCrearProyecto) {
 
         document.getElementById("planNombreProyecto").value = "";
         document.getElementById("planNotasProyecto").value = "";
+        if (tamanoInput) tamanoInput.value = "";
 
         const editor = document.getElementById("editorProyecto");
         if (editor) editor.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -138,6 +144,11 @@ if (btnGuardarDatosProyecto) {
         estado.proyectoActivo.nombre = nombre;
         estado.proyectoActivo.tipo = document.getElementById("editTipoProyecto").value;
         estado.proyectoActivo.notas = texto("editNotasProyecto");
+        const et = document.getElementById("editTamanoProyecto");
+        if (et !== null) {
+            const t = Number(et.value);
+            estado.proyectoActivo.tamano = Number.isFinite(t) && t > 0 ? t : null;
+        }
         estado.proyectoActivo.fechaModificacion = new Date().toISOString();
 
         guardarProyectos(estado.proyectos);
@@ -265,6 +276,8 @@ export function renderProyectoActivo() {
     }
     const editNotas = document.getElementById("editNotasProyecto");
     if (editNotas) editNotas.value = estado.proyectoActivo.notas || "";
+    const editTamano = document.getElementById("editTamanoProyecto");
+    if (editTamano) editTamano.value = estado.proyectoActivo.tamano || "";
 
     const lista = document.getElementById("listaSeccionesProyecto");
     if (!lista) return;
@@ -297,6 +310,10 @@ function renderDetalleProyecto(p) {
     const costo = p.costo || {};
     let html = `<div class="detalle-proyecto">`;
 
+    if (p.tamano) {
+        html += `<p class="info-text detalle-tamano">Tamaño: <strong>${Number(p.tamano)} cm</strong></p>`;
+    }
+
     html += `<h4>Coste</h4><div class="item-details">
         <span>Lanas: ${formatearMoneda(costo.lanas)}</span>
         <span>Relleno: ${formatearMoneda(costo.relleno)}</span>
@@ -316,6 +333,9 @@ function renderDetalleProyecto(p) {
 
     if (p.patronOrigen) {
         html += `<p class="info-text">📄 Patrón de origen: ${escapeHtml(p.patronOrigen.codigo)} — ${escapeHtml(p.patronOrigen.nombre)}</p>`;
+    }
+    if (p.tamano) {
+        html += `<p class="info-text">📏 Tamaño: ${Number(p.tamano)} cm</p>`;
     }
 
     const mat = p.materialesUsados || {};

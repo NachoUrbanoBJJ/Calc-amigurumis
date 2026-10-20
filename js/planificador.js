@@ -41,11 +41,15 @@ export function normalizarProyecto(p) {
     const mat = base.materialesUsados || {};
     const total = Number(costo.total) || 0;
 
+    const tamano = base.tamano === undefined || base.tamano === null || base.tamano === "" ? null : Number(base.tamano);
+    const tamanoNormalizado = Number.isFinite(tamano) && tamano >= 0 ? tamano : null;
+
     return {
         id: base.id || generarId(),
         nombre: base.nombre || "Sin nombre",
         tipo: base.tipo || "amigurumi",
         notas: base.notas || "",
+        tamano: tamanoNormalizado,
         secciones: Array.isArray(base.secciones) ? base.secciones : [],
         costo: {
             lanas: Number(costo.lanas) || 0,
@@ -114,6 +118,7 @@ export function crearProyecto(nombre, tipo, notas) {
         nombre: nombre || "Proyecto sin nombre",
         tipo: tipo || "amigurumi",
         notas: notas || "",
+        tamano: null,
         secciones: [],
         costo: costoVacio(),
         materialesUsados: materialesVacios(),
@@ -137,6 +142,7 @@ export function duplicarProyecto(proyecto) {
         ...base,
         id: generarId(),
         nombre: `${base.nombre} (copia)`,
+        tamano: base.tamano,
         secciones: base.secciones.map((s) => ({ ...s, id: generarId() })),
         costo: { ...base.costo },
         materialesUsados: JSON.parse(JSON.stringify(base.materialesUsados || {})),

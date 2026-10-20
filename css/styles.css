@@ -59,6 +59,9 @@
     --superficie: #fffaf1;
     --superficie-2: #f8efe0;
     --superficie-3: #f1e3cf;
+    /* Fondo de los campos: apenas hundido respecto de la tarjeta, para que el
+       control se lea como una casilla y no quede solo la línea del borde. */
+    --campo: #fdf3e3;
     --texto: #33261d;
     --texto-suave: #5f4a38;
     --texto-tenue: #7c6349;
@@ -126,6 +129,7 @@ html[data-tema="oscuro"] {
     --superficie: #241a16;
     --superficie-2: #2e211c;
     --superficie-3: #3a2a22;
+    --campo: #2b1f1a;
     --texto: #f6e9db;
     --texto-suave: #d5bda6;
     --texto-tenue: #b6977e;
@@ -170,6 +174,7 @@ html[data-tema="oscuro"] {
         --superficie: #241a16;
         --superficie-2: #2e211c;
         --superficie-3: #3a2a22;
+        --campo: #2b1f1a;
         --texto: #f6e9db;
         --texto-suave: #d5bda6;
         --texto-tenue: #b6977e;
@@ -374,7 +379,7 @@ textarea {
     border: none;
     border-bottom: 2px solid var(--borde-fuerte);
     border-radius: var(--radio-s) var(--radio-s) 3px 3px;
-    background-color: var(--superficie);
+    background-color: var(--campo);
     color: var(--texto);
     font-family: inherit;
     font-size: 1rem;
@@ -906,9 +911,39 @@ main:focus {
     border-top: 1px dashed var(--borde);
 }
 
-.acciones-escala {
-    justify-content: flex-start;
-    margin: var(--esp-3) 0 var(--esp-2);
+.card.modo-calculo {
+    padding: clamp(16px, 2.5vw, 24px) clamp(14px, 2.8vw, 24px);
+}
+
+.modo-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--esp-2);
+    margin: var(--esp-2) 0 var(--esp-1);
+}
+
+.modo-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--borde);
+    border-radius: 12px 6px 12px 6px / 6px 12px 6px 12px;
+    background: var(--superficie-2);
+    cursor: pointer;
+    font-size: 0.95rem;
+    box-shadow: var(--sombra-1);
+}
+
+.modo-option input {
+    width: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    margin: 0;
+    accent-color: var(--primario);
+    border: 1px solid var(--borde-fuerte);
+    border-radius: 50%;
+    background: var(--campo);
 }
 
 .resultado-escala {
