@@ -60,7 +60,11 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 
 ## Bloque 4 — Diseño y experiencia (UI/UX) ✅
 
-- ✅ Paleta rosa/blanco y tarjetas (tonos ajustados para contraste AA)
+- ✅ Paleta cálida (papel crema, lana terracota y acentos secundarios) con contraste AA
+- ✅ **Rediseño cozy** “cuaderno / diario tejido”: textura de papel cuadriculado, tarjetas con cinta
+  adhesiva y esquinas irregulares, botones tipo etiqueta de tela y badges como sellos
+- ✅ Tipografías locales incluidas en el repo: Lora (títulos), Caveat (manuscrita) y Nunito Sans
+  (cuerpo) — funcionan sin conexión y quedan cacheadas por el Service Worker
 - ✅ Responsive real (tarjetas con max-width + flex/grid)
 - ✅ Diseño mobile-first (base móvil + media queries de mejora)
 - ✅ Ajustes de tipografía y espaciado (tokens: tipos, espaciado, radios, sombras)

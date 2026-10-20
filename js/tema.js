@@ -33,7 +33,7 @@ function aplicarTema(tema, persistir = true) {
     const valido = temaValido(tema);
     document.documentElement.setAttribute("data-tema", valido);
 
-    if (metaTema) metaTema.setAttribute("content", esOscuro(valido) ? "#171014" : "#b0184a");
+    if (metaTema) metaTema.setAttribute("content", esOscuro(valido) ? "#191210" : "#f6efe3");
 
     if (boton) {
         boton.textContent = ICONOS[valido];

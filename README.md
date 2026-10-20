@@ -32,6 +32,9 @@ componentes y mano de obra), guardar patrones, planificar proyectos y administra
 - **Accesibilidad y diseño**: foco visible, enlace “Saltar al contenido”, `aria-current` en la
   navegación, etiquetas en todos los campos, teclado numérico en móvil (`inputmode`), controles de
   44 px, contraste AA y **tema claro / oscuro / automático** (botón en el encabezado).
+- **Estética cozy**: look “cuaderno / diario tejido” (papel cuadriculado, tarjetas con cinta adhesiva y
+  esquinas irregulares, subrayado dibujado a mano). Tipografías locales (funcionan sin conexión):
+  **Lora** para títulos, **Caveat** para acentos manuscritos y **Nunito Sans** para el cuerpo.
 - **Impresión**: estilos propios para que el PDF salga limpio (sin menús ni botones).
 - Moneda en **pesos argentinos (ARS)**. Validaciones de entrada y escapado de HTML.
 
@@ -77,7 +80,7 @@ npm run preview
 ```
 Calcuadora/
 ├── css/
-│   └── styles.css          # Sistema de diseño (tokens, temas claro/oscuro, print)
+│   └── styles.css          # Sistema de diseño cozy (tokens, temas claro/oscuro, print)
 ├── js/
 │   ├── calculos.js         # Lógica pura de cálculos (sin DOM)
 │   ├── ui.js               # Helpers de render de la interfaz
@@ -99,6 +102,7 @@ Calcuadora/
 │   ├── pwa.js              # Registro del Service Worker
 │   └── scripts.js          # Punto de entrada
 ├── public/                 # Assets estáticos (manifest, service worker, iconos)
+│   └── fuentes/            # Tipografías locales (Lora, Caveat, Nunito Sans)
 ├── scripts/
 │   └── generate-icons.mjs  # Generador de iconos
 ├── tests/

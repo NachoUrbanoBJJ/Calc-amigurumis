@@ -12,9 +12,9 @@ const OUT = resolve(HERE, "..", "public");
 mkdirSync(OUT, { recursive: true });
 
 // Paleta (igual que la app)
-const BG = [255, 92, 138]; // #ff5c8a
-const BALL = [255, 255, 255];
-const STRAND = [255, 197, 211]; // #ffc5d3
+const BG = [168, 67, 77]; // #a8434d (lana teñida)
+const BALL = [255, 250, 241]; // #fffaf1 (papel)
+const STRAND = [246, 221, 216]; // #f6ddd8
 const ANGLES = [Math.PI / 6, Math.PI / 2, (5 * Math.PI) / 6];
 
 // ---------------------------------------------------------------------------
@@ -142,9 +142,9 @@ function makeSvg() {
     <defs>
         <clipPath id="bola"><circle cx="${c}" cy="${c}" r="${rb}" /></clipPath>
     </defs>
-    <rect width="${S}" height="${S}" rx="112" fill="#ff5c8a" />
-    <circle cx="${c}" cy="${c}" r="${rb}" fill="#ffffff" />
-    <g clip-path="url(#bola)" stroke="#ffc5d3" stroke-width="9" stroke-linecap="round">
+    <rect width="${S}" height="${S}" rx="112" fill="#a8434d" />
+    <circle cx="${c}" cy="${c}" r="${rb}" fill="#fffaf1" />
+    <g clip-path="url(#bola)" stroke="#f6ddd8" stroke-width="9" stroke-linecap="round">
         ${lineas}
     </g>
 </svg>

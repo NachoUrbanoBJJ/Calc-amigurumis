@@ -2,8 +2,20 @@
 // Service Worker: cachea el app shell para que funcione sin conexión.
 // Estrategia: cache-first con revalidación en segundo plano.
 // ---------------------------------------------------------------------------
-const CACHE = "amigurumis-v1";
-const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./icon-192.png", "./icon-512.png"];
+const CACHE = "amigurumis-v2";
+const APP_SHELL = [
+    "./",
+    "./index.html",
+    "./manifest.webmanifest",
+    "./icon.svg",
+    "./icon-192.png",
+    "./icon-512.png",
+    "./fuentes/lora-400-700.woff2",
+    "./fuentes/lora-italic-400-600.woff2",
+    "./fuentes/caveat-500-700.woff2",
+    "./fuentes/nunito-sans-400-800.woff2",
+    "./fuentes/nunito-sans-italic-400-700.woff2",
+];
 
 self.addEventListener("install", (event) => {
     event.waitUntil(
