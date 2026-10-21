@@ -458,6 +458,26 @@ label {
     gap: var(--esp-3);
 }
 
+/* En la calculadora, cada bloque de campos necesita aire respecto del anterior:
+   la línea inferior de un input no debe quedar pegada al label que sigue. */
+#section-calculadora .info,
+#section-calculadora .calculo {
+    row-gap: 1.75rem;
+}
+
+#section-calculadora .form-group.full-width + .info,
+#section-calculadora .form-group.full-width + .calculo,
+#section-calculadora .info + .calculo,
+#section-calculadora .componentes > .form-group.full-width + .form-group,
+#section-calculadora .form-group + #datosComponentes {
+    margin-top: 1.75rem;
+}
+
+#section-calculadora .form-grid + .info-text,
+#section-calculadora .calculo + .info-text {
+    margin-top: var(--esp-2);
+}
+
 /* --------------------------------------------------------------------------
    Botones (etiquetas de tela / sello)
    -------------------------------------------------------------------------- */
