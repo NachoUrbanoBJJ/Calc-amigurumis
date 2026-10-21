@@ -1,6 +1,7 @@
 import { leerJson, guardarJson } from "./almacenamiento.js";
 import { esObjeto } from "./utils.js";
 import { calcularPrecioIdeal } from "./calculos.js";
+import { normalizarUnidad } from "./unidades.js";
 
 const STORAGE_KEY_PROYECTOS = "calc-amigurumis-proyectos-v2";
 const STORAGE_KEY_PLAN_OLD = "calc-amigurumis-planificador-v1";
@@ -30,6 +31,19 @@ export function costoVacio() {
 
 function materialesVacios() {
     return { lana: null, relleno: null, componentes: [] };
+}
+
+/**
+ * Copia profunda de la snapshot de entradas de la calculadora.
+ * Es tolerante a datos viejos o corruptos: si no es un objeto, devuelve null.
+ */
+function copiarEntradas(entradas) {
+    if (!esObjeto(entradas)) return null;
+    try {
+        return JSON.parse(JSON.stringify(entradas));
+    } catch {
+        return null;
+    }
 }
 
 /**
@@ -64,6 +78,9 @@ export function normalizarProyecto(p) {
             relleno: mat.relleno || null,
             componentes: Array.isArray(mat.componentes) ? mat.componentes : [],
         },
+        // Snapshot de los campos de la calculadora para poder reabrir el
+        // proyecto con los mismos datos (los proyectos viejos no la tienen).
+        entradas: copiarEntradas(base.entradas),
         patronOrigen: base.patronOrigen || null,
         estado: base.estado || (total > 0 ? "terminado" : "planificando"),
         fechaCreacion: base.fechaCreacion || base.fecha || new Date().toISOString(),
@@ -117,6 +134,7 @@ export function crearProyecto(nombre, tipo, notas) {
         secciones: [],
         costo: costoVacio(),
         materialesUsados: materialesVacios(),
+        entradas: null,
         patronOrigen: null,
         estado: "planificando",
         fechaCreacion: ahora,
@@ -140,6 +158,7 @@ export function duplicarProyecto(proyecto) {
         secciones: base.secciones.map((s) => ({ ...s, id: generarId() })),
         costo: { ...base.costo },
         materialesUsados: JSON.parse(JSON.stringify(base.materialesUsados || {})),
+        entradas: base.entradas ? JSON.parse(JSON.stringify(base.entradas)) : null,
         patronOrigen: base.patronOrigen ? { ...base.patronOrigen } : null,
         fechaCreacion: ahora,
         fechaModificacion: ahora,
@@ -210,7 +229,7 @@ export function normalizarMaterial(m) {
         id: base.id || generarId(),
         nombre: base.nombre || "",
         cantidad: Number(base.cantidad) || 0,
-        unidad: base.unidad || "",
+        unidad: normalizarUnidad(base.unidad),
     };
 }
 

@@ -9,8 +9,6 @@ import {
     calcularTotalComponentes,
     calcularPrecioIdeal,
     calcularVenta,
-    factorEscala,
-    escalarPorTamano,
 } from "../js/calculos.js";
 
 import {
@@ -18,6 +16,7 @@ import {
     generarCodigoPatron,
     normalizarPatron,
     normalizarPatrones,
+    normalizarMaterial,
     normalizarProyecto,
     crearProyecto,
     agregarSeccion,
@@ -35,8 +34,8 @@ import {
     agregarLanaInventario,
     agregarRellenoInventario,
     agregarComponenteInventario,
-    descontarLana,
-    descontarRelleno,
+    descontarLanaPorId,
+    descontarRellenoPorId,
     descontarComponentes,
     guardarInventario,
     cargarInventario,
@@ -46,6 +45,7 @@ import {
 } from "../js/inventario.js";
 
 import { esSeccionValida } from "../js/utils.js";
+import { normalizarUnidad, categoriaUnidad, convertirUnidad, formatearCantidadUnidad } from "../js/unidades.js";
 
 import { leerJson, guardarJson, storageDisponible } from "../js/almacenamiento.js";
 
@@ -148,52 +148,44 @@ test("calcularVenta: sin precio ni margen no inventa un precio", () => {
 });
 
 // ---------------------------------------------------------------------------
-// calculos.js — escalado por tamaño
+// unidades.js — normalización de unidades de patrones
 // ---------------------------------------------------------------------------
-test("factorEscala: mismo tamaño no cambia (1)", () => {
-    assert.equal(factorEscala(15, 15), 1);
-    assert.equal(factorEscala(15, 15, 2.3), 1);
+test("normalizarUnidad: alias frecuentes a códigos canónicos", () => {
+    assert.equal(normalizarUnidad(" Gramos "), "g");
+    assert.equal(normalizarUnidad("KG"), "kg");
+    assert.equal(normalizarUnidad("unidades"), "ud");
+    assert.equal(normalizarUnidad("centímetros"), "cm");
+    assert.equal(normalizarUnidad("ovillo"), "ovillo");
+    assert.equal(normalizarUnidad(""), "");
 });
 
-test("factorEscala: la lana crece con la superficie (altura²)", () => {
-    // 15 -> 30 cm: doble altura, cuádruple superficie.
-    assert.equal(factorEscala(15, 30, 2), 4);
-    assert.equal(factorEscala(10, 20, 2), 4);
+test("categoriaUnidad: separa peso, cantidad, longitud y volumen", () => {
+    assert.equal(categoriaUnidad("g"), "peso");
+    assert.equal(categoriaUnidad("kg"), "peso");
+    assert.equal(categoriaUnidad("ud"), "cantidad");
+    assert.equal(categoriaUnidad(""), "cantidad");
+    assert.equal(categoriaUnidad("m"), "longitud");
+    assert.equal(categoriaUnidad("ml"), "volumen");
+    assert.equal(categoriaUnidad("ovillo"), "otra");
 });
 
-test("factorEscala: exponentes mayores crecen más fuerte (relleno > lana)", () => {
-    const lana = factorEscala(15, 30, 2);
-    const relleno = factorEscala(15, 30, 2.3);
-    assert.ok(relleno > lana);
+test("convertirUnidad: convierte dentro de la misma magnitud", () => {
+    assert.equal(convertirUnidad(1, "kg", "g"), 1000);
+    assert.equal(convertirUnidad(250, "g", "kg"), 0.25);
+    assert.equal(convertirUnidad(1.5, "m", "cm"), 150);
+    assert.equal(convertirUnidad(2, "l", "ml"), 2000);
+    assert.equal(convertirUnidad(3, "ud", "ud"), 3);
 });
 
-test("factorEscala: datos inválidos devuelven escala neutra (1)", () => {
-    assert.equal(factorEscala(0, 20), 1);
-    assert.equal(factorEscala(15, 0), 1);
-    assert.equal(factorEscala("abc", 20), 1);
-    assert.equal(factorEscala(-5, 20), 1);
+test("convertirUnidad: magnitudes incompatibles devuelven null", () => {
+    assert.equal(convertirUnidad(1, "kg", "ud"), null);
+    assert.equal(convertirUnidad(1, "m", "g"), null);
+    assert.equal(convertirUnidad(1, "ovillo", "g"), null);
 });
 
-test("escalarPorTamano: 15 -> 30 cm cuadruplica lana y horas suben ~1,7", () => {
-    const r = escalarPorTamano(15, 30, { gramosLana: 40, gramosRelleno: 60, horas: 5 });
-    assert.equal(r.gramosLana, 160); // 40 × 4
-    assert.equal(r.factores.lana, 4);
-    assert.ok(r.horas > 5 * 3 && r.horas < 5 * 4); // 2^1,7 ≈ 3,25
-    assert.ok(r.gramosRelleno > r.gramosLana); // el relleno crece más
-});
-
-test("escalarPorTamano: tamaños iguales no alteran los valores", () => {
-    const r = escalarPorTamano(18, 18, { gramosLana: 55, gramosRelleno: 90, horas: 5 });
-    assert.equal(r.gramosLana, 55);
-    assert.equal(r.gramosRelleno, 90);
-    assert.equal(r.horas, 5);
-});
-
-test("escalarPorTamano: sin valores cargados devuelve 0 sin romper", () => {
-    const r = escalarPorTamano(15, 20, {});
-    assert.equal(r.gramosLana, 0);
-    assert.equal(r.gramosRelleno, 0);
-    assert.equal(r.horas, 0);
+test("formatearCantidadUnidad: cantidad y unidad legibles", () => {
+    assert.equal(formatearCantidadUnidad(1.5, "kg"), "1,5 kg");
+    assert.equal(formatearCantidadUnidad(6, ""), "6");
 });
 
 // ---------------------------------------------------------------------------
@@ -227,6 +219,24 @@ test("normalizarProyecto: completa campos faltantes y define estado", () => {
     const conTotal = normalizarProyecto({ costo: { total: 100 } });
     assert.equal(conTotal.estado, "terminado");
     assert.equal(conTotal.costo.precioIdeal, 150);
+    assert.equal(conTotal.entradas, null);
+});
+
+test("normalizarProyecto: conserva y copia la snapshot de entradas", () => {
+    const original = {
+        nombre: "Con snapshot",
+        entradas: {
+            version: 1,
+            lana: { inventarioId: "lana-1", color: "Rojo", gramosUsados: "50" },
+            componentes: [{ tipo: "Ojos", cantidadUtilizada: 2 }],
+        },
+    };
+    const p = normalizarProyecto(original);
+    assert.equal(p.entradas.lana.inventarioId, "lana-1");
+    assert.equal(p.entradas.lana.gramosUsados, "50");
+
+    p.entradas.lana.color = "Azul";
+    assert.equal(original.entradas.lana.color, "Rojo");
 });
 
 test("crearProyecto: proyecto nuevo vacío", () => {
@@ -237,6 +247,7 @@ test("crearProyecto: proyecto nuevo vacío", () => {
     assert.equal(p.estado, "planificando");
     assert.equal(p.costo.total, 0);
     assert.equal(p.secciones.length, 0);
+    assert.equal(p.entradas, null);
 });
 
 test("agregarSeccion / eliminarSeccion", () => {
@@ -266,6 +277,11 @@ test("duplicarProyecto: copia independiente con ids y fechas nuevas", () => {
     original.costo.precioIdeal = 1500;
     agregarSeccion(original, { nombre: "Cabeza", puntos: 6, vueltas: 3, altura: 4 });
     original.materialesUsados.lana = { color: "Rojo", marca: "Ovillos SA", gramosUsados: 50 };
+    original.entradas = {
+        version: 1,
+        lana: { color: "Rojo", gramosUsados: "50" },
+        componentes: [{ tipo: "Ojos", cantidadUtilizada: 2 }],
+    };
 
     const copia = duplicarProyecto(original);
 
@@ -279,6 +295,10 @@ test("duplicarProyecto: copia independiente con ids y fechas nuevas", () => {
 
     copia.materialesUsados.lana.color = "Azul";
     assert.equal(original.materialesUsados.lana.color, "Rojo");
+
+    copia.entradas.lana.color = "Azul";
+    assert.equal(original.entradas.lana.color, "Rojo");
+    assert.equal(copia.entradas.componentes[0].tipo, "Ojos");
 
     copia.secciones[0].nombre = "Cabeza copia";
     assert.equal(original.secciones[0].nombre, "Cabeza");
@@ -353,6 +373,13 @@ test("normalizarPatron: migra materiales de texto plano", () => {
     assert.equal(p.materialesTexto, "lana roja, aguja 3mm");
 });
 
+test("normalizarMaterial: normaliza la unidad y la cantidad", () => {
+    const m = normalizarMaterial({ nombre: "Lana", cantidad: "50", unidad: "Gramos" });
+    assert.equal(m.nombre, "Lana");
+    assert.equal(m.cantidad, 50);
+    assert.equal(m.unidad, "g");
+});
+
 test("normalizarPatrones: asigna códigos a los que no tienen (sin colisionar)", () => {
     const lista = normalizarPatrones([{ nombre: "A" }, { nombre: "B", codigo: "PAT-0003" }]);
     // El código nuevo se calcula sobre el máximo existente para no pisar PAT-0003.
@@ -401,22 +428,25 @@ function invConLana(gramos) {
     return inv;
 }
 
-test("descontarLana: descuenta del color coincidente", () => {
+test("descontarLanaPorId: descuenta exactamente la lana elegida", () => {
     const inv = invConLana(500);
-    const r = descontarLana(inv, { color: "Rojo", marca: "", gramosUsados: 50 });
+    const id = inv.lanas[0].id;
+    const r = descontarLanaPorId(inv, { inventarioId: id, gramosUsados: 50 });
     assert.equal(r.descontado, 50);
+    assert.equal(r.encontrado, true);
     assert.equal(inv.lanas[0].gramosDisponibles, 450);
 });
 
-test("descontarLana: sin coincidencia no descuenta", () => {
+test("descontarLanaPorId: id inexistente no descuenta nada", () => {
     const inv = invConLana(500);
-    const r = descontarLana(inv, { color: "Azul", marca: "", gramosUsados: 50 });
+    const r = descontarLanaPorId(inv, { inventarioId: "no-existe", gramosUsados: 50 });
     assert.equal(r.descontado, 0);
+    assert.equal(r.encontrado, false);
     assert.equal(r.actualizado, false);
     assert.equal(inv.lanas[0].gramosDisponibles, 500);
 });
 
-test("descontarLana: reparte entre varios ovillos y se queda sin stock", () => {
+test("descontarLanaPorId: no reparte el faltante entre otros ovillos", () => {
     const inv = invConLana(30);
     agregarLanaInventario(inv, {
         color: "Rojo",
@@ -425,13 +455,13 @@ test("descontarLana: reparte entre varios ovillos y se queda sin stock", () => {
         gramosOvillo: 100,
         gramosDisponibles: 10,
     });
-    const r = descontarLana(inv, { color: "Rojo", marca: "", gramosUsados: 100 });
-    assert.equal(r.descontado, 40); // solo había 40 g
+    const r = descontarLanaPorId(inv, { inventarioId: inv.lanas[0].id, gramosUsados: 100 });
+    assert.equal(r.descontado, 30);
     assert.equal(inv.lanas[0].gramosDisponibles, 0);
-    assert.equal(inv.lanas[1].gramosDisponibles, 0);
+    assert.equal(inv.lanas[1].gramosDisponibles, 10);
 });
 
-test("descontarRelleno: descuenta por tipo", () => {
+test("descontarRellenoPorId: descuenta el relleno elegido", () => {
     const inv = { lanas: [], rellenos: [], componentes: [] };
     agregarRellenoInventario(inv, {
         tipo: "Silicona",
@@ -440,12 +470,12 @@ test("descontarRelleno: descuenta por tipo", () => {
         gramosRelleno: 1000,
         gramosDisponibles: 800,
     });
-    const r = descontarRelleno(inv, { tipo: "Silicona", marca: "", gramosUsados: 100 });
+    const r = descontarRellenoPorId(inv, { inventarioId: inv.rellenos[0].id, gramosUsados: 100 });
     assert.equal(r.descontado, 100);
     assert.equal(inv.rellenos[0].gramosDisponibles, 700);
 });
 
-test("descontarComponentes: coincidencia tolerante de nombre", () => {
+test("descontarComponentes: descuenta el componente elegido por id", () => {
     const inv = { lanas: [], rellenos: [], componentes: [] };
     agregarComponenteInventario(inv, {
         tipo: "Ojos de seguridad 12mm",
@@ -453,16 +483,27 @@ test("descontarComponentes: coincidencia tolerante de nombre", () => {
         precioCompra: 50,
         cantidadDisponible: 100,
     });
-    const r = descontarComponentes(inv, [{ tipo: "ojos", cantidadUtilizada: 2 }]);
+    const r = descontarComponentes(inv, [{ inventarioId: inv.componentes[0].id, tipo: "ojos", cantidadUtilizada: 2 }]);
     assert.equal(r.actualizado, true);
+    assert.equal(r.detalle[0].descontado, 2);
     assert.equal(inv.componentes[0].cantidadDisponible, 98);
 });
 
-test("descontarComponentes: sin componente coincidente no actualiza", () => {
+test("descontarComponentes: un componente manual sin id no toca el stock", () => {
     const inv = { lanas: [], rellenos: [], componentes: [] };
     agregarComponenteInventario(inv, { tipo: "Ojos", cantidadComprada: 10, precioCompra: 50, cantidadDisponible: 10 });
-    const r = descontarComponentes(inv, [{ tipo: "Nariz", cantidadUtilizada: 1 }]);
+    const r = descontarComponentes(inv, [{ tipo: "ojos", cantidadUtilizada: 5 }]);
     assert.equal(r.actualizado, false);
+    assert.equal(r.detalle.length, 0);
+    assert.equal(inv.componentes[0].cantidadDisponible, 10);
+});
+
+test("descontarComponentes: id inexistente informa el faltante sin tocar stock", () => {
+    const inv = { lanas: [], rellenos: [], componentes: [] };
+    agregarComponenteInventario(inv, { tipo: "Ojos", cantidadComprada: 10, precioCompra: 50, cantidadDisponible: 10 });
+    const r = descontarComponentes(inv, [{ inventarioId: "no-existe", cantidadUtilizada: 1 }]);
+    assert.equal(r.actualizado, false);
+    assert.equal(r.detalle[0].encontrado, false);
     assert.equal(inv.componentes[0].cantidadDisponible, 10);
 });
 
@@ -492,40 +533,14 @@ test("coincideTexto: iguales o contenidos", () => {
     assert.equal(coincideTexto("", "Rojo"), false);
 });
 
-test("descontarLana: coincidencia tolerante de color parcial", () => {
-    const inv = { lanas: [], rellenos: [], componentes: [] };
-    agregarLanaInventario(inv, {
-        color: "Rojo oscuro",
-        marca: "Drops",
-        precioOvillo: 1000,
-        gramosOvillo: 100,
-        gramosDisponibles: 500,
-    });
-    const r = descontarLana(inv, { color: "Rojo", marca: "", gramosUsados: 50 });
-    assert.equal(r.descontado, 50);
-    assert.equal(inv.lanas[0].gramosDisponibles, 450);
-});
-
-test("descontarRelleno: coincidencia tolerante de tipo parcial", () => {
-    const inv = { lanas: [], rellenos: [], componentes: [] };
-    agregarRellenoInventario(inv, {
-        tipo: "Fibra siliconada",
-        marca: "HobbyFill",
-        precioRelleno: 2000,
-        gramosRelleno: 1000,
-        gramosDisponibles: 800,
-    });
-    const r = descontarRelleno(inv, { tipo: "siliconada", marca: "", gramosUsados: 100 });
-    assert.equal(r.descontado, 100);
-    assert.equal(inv.rellenos[0].gramosDisponibles, 700);
-});
-
-test("descontarLana: inventario inválido no lanza", () => {
-    assert.deepEqual(descontarLana(null, { color: "Rojo", gramosUsados: 10 }), {
+test("descontarLanaPorId: inventario inválido no lanza", () => {
+    assert.deepEqual(descontarLanaPorId(null, { inventarioId: "x", gramosUsados: 10 }), {
         descontado: 0,
         actualizado: false,
+        encontrado: false,
+        disponible: 0,
     });
-    assert.deepEqual(descontarComponentes(undefined, undefined), { actualizado: false });
+    assert.deepEqual(descontarComponentes(undefined, undefined), { actualizado: false, detalle: [] });
 });
 
 // ---------------------------------------------------------------------------

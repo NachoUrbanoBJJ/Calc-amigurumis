@@ -1,6 +1,6 @@
 {
     "name": "calculadora-amigurumis",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Calculadora de costos para amigurumis (lana, relleno, componentes y mano de obra).",
     "private": true,
     "type": "module",

@@ -10,6 +10,7 @@ import {
     clasificarStock,
 } from "./inventario.js";
 import { confirmar, mostrarAviso } from "./modal.js";
+import { renderSelectoresInventario } from "./selectores-inventario.js";
 
 // ---------------------------------------------------------------------------
 // Formularios de alta/edición de inventario
@@ -542,4 +543,5 @@ export function renderInventario() {
     );
 
     renderResumen();
+    renderSelectoresInventario();
 }

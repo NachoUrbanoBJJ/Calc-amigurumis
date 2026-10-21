@@ -114,67 +114,91 @@ export function agregarComponenteInventario(inventario, componente) {
 }
 
 /**
- * Descuenta gramos de lana del inventario.
- * Coincidencia tolerante por color y marca (igual criterio que la
- * disponibilidad de materiales de los patrones).
+ * Descuenta gramos de una lana puntual del inventario, identificada por id.
+ * No busca por color/marca: la selección del usuario es la única fuente de
+ * verdad (evita descontar el material equivocado).
+ *
+ * Devuelve cuánto se descontó y cuánto había disponible antes del descuento.
  */
-export function descontarLana(inventario, { color, marca, gramosUsados } = {}) {
+export function descontarLanaPorId(inventario, { inventarioId, gramosUsados } = {}) {
     const lanas = Array.isArray(inventario && inventario.lanas) ? inventario.lanas : [];
-    if (!gramosUsados || gramosUsados <= 0) return { descontado: 0, actualizado: false };
-
-    let restante = gramosUsados;
-    for (let i = 0; i < lanas.length && restante > 0; i++) {
-        const l = lanas[i];
-        if (!l || !(l.gramosDisponibles > 0)) continue;
-        if (color && !coincideTexto(color, l.color)) continue;
-        if (marca && !coincideTexto(marca, l.marca)) continue;
-        const descontar = Math.min(restante, l.gramosDisponibles);
-        l.gramosDisponibles = Number((l.gramosDisponibles - descontar).toFixed(3));
-        restante = Number((restante - descontar).toFixed(3));
+    const pedido = Number(gramosUsados) || 0;
+    if (!inventarioId || pedido <= 0) {
+        return { descontado: 0, actualizado: false, encontrado: false, disponible: 0 };
     }
 
-    const descontado = Number((gramosUsados - restante).toFixed(3));
-    return { descontado, actualizado: descontado > 0 };
+    const lana = lanas.find((l) => l && l.id === inventarioId);
+    if (!lana) return { descontado: 0, actualizado: false, encontrado: false, disponible: 0 };
+
+    const disponible = Math.max(0, Number(lana.gramosDisponibles) || 0);
+    const descontar = Math.min(pedido, disponible);
+    lana.gramosDisponibles = Number((disponible - descontar).toFixed(3));
+
+    return {
+        descontado: Number(descontar.toFixed(3)),
+        actualizado: descontar > 0,
+        encontrado: true,
+        disponible,
+    };
 }
 
 /**
- * Descuenta gramos de relleno del inventario (coincidencia tolerante).
+ * Descuenta gramos de un relleno puntual del inventario, identificado por id.
  */
-export function descontarRelleno(inventario, { tipo, marca, gramosUsados } = {}) {
+export function descontarRellenoPorId(inventario, { inventarioId, gramosUsados } = {}) {
     const rellenos = Array.isArray(inventario && inventario.rellenos) ? inventario.rellenos : [];
-    if (!gramosUsados || gramosUsados <= 0) return { descontado: 0, actualizado: false };
-
-    let restante = gramosUsados;
-    for (let i = 0; i < rellenos.length && restante > 0; i++) {
-        const r = rellenos[i];
-        if (!r || !(r.gramosDisponibles > 0)) continue;
-        if (tipo && !coincideTexto(tipo, r.tipo)) continue;
-        if (marca && !coincideTexto(marca, r.marca)) continue;
-        const descontar = Math.min(restante, r.gramosDisponibles);
-        r.gramosDisponibles = Number((r.gramosDisponibles - descontar).toFixed(3));
-        restante = Number((restante - descontar).toFixed(3));
+    const pedido = Number(gramosUsados) || 0;
+    if (!inventarioId || pedido <= 0) {
+        return { descontado: 0, actualizado: false, encontrado: false, disponible: 0 };
     }
 
-    const descontado = Number((gramosUsados - restante).toFixed(3));
-    return { descontado, actualizado: descontado > 0 };
+    const relleno = rellenos.find((r) => r && r.id === inventarioId);
+    if (!relleno) return { descontado: 0, actualizado: false, encontrado: false, disponible: 0 };
+
+    const disponible = Math.max(0, Number(relleno.gramosDisponibles) || 0);
+    const descontar = Math.min(pedido, disponible);
+    relleno.gramosDisponibles = Number((disponible - descontar).toFixed(3));
+
+    return {
+        descontado: Number(descontar.toFixed(3)),
+        actualizado: descontar > 0,
+        encontrado: true,
+        disponible,
+    };
 }
 
+/**
+ * Descuenta componentes usados que estén vinculados a un material del
+ * inventario por id. Los componentes manuales (sin `inventarioId`) no tocan
+ * el stock.
+ */
 export function descontarComponentes(inventario, componentesUsados = []) {
     const componentes = Array.isArray(inventario && inventario.componentes) ? inventario.componentes : [];
-    let actualizado = false;
-    componentesUsados.forEach((cu) => {
-        if (!cu || !cu.cantidadUtilizada || cu.cantidadUtilizada <= 0) return;
-        let restante = cu.cantidadUtilizada;
-        for (let i = 0; i < componentes.length && restante > 0; i++) {
-            const c = componentes[i];
-            if (!c || !(c.cantidadDisponible > 0)) continue;
-            // Coincidencia tolerante: "ojos" matchea con "Ojos de seguridad 12mm"
-            if (cu.tipo && !coincideTexto(cu.tipo, c.tipo)) continue;
-            const descontar = Math.min(restante, c.cantidadDisponible);
-            c.cantidadDisponible = Math.round(c.cantidadDisponible - descontar);
-            restante = Math.round(restante - descontar);
+    const detalle = [];
+
+    (Array.isArray(componentesUsados) ? componentesUsados : []).forEach((cu) => {
+        if (!cu || !cu.inventarioId) return;
+        const pedido = Number(cu.cantidadUtilizada) || 0;
+        if (pedido <= 0) return;
+
+        const componente = componentes.find((c) => c && c.id === cu.inventarioId);
+        if (!componente) {
+            detalle.push({ inventarioId: cu.inventarioId, encontrado: false, pedido, descontado: 0, disponible: 0 });
+            return;
         }
-        if (cu.cantidadUtilizada - restante > 0) actualizado = true;
+
+        const disponible = Math.max(0, Number(componente.cantidadDisponible) || 0);
+        const descontar = Math.min(pedido, disponible);
+        componente.cantidadDisponible = Math.round(disponible - descontar);
+
+        detalle.push({
+            inventarioId: cu.inventarioId,
+            encontrado: true,
+            pedido,
+            descontado: descontar,
+            disponible,
+        });
     });
-    return { actualizado };
+
+    return { actualizado: detalle.some((d) => d.descontado > 0), detalle };
 }

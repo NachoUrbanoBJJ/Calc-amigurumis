@@ -44,6 +44,14 @@ function aplicarTema(tema, persistir = true) {
     if (persistir) actualizarConfig({ tema: valido });
 }
 
+/**
+ * Reaplica el tema guardado sin volver a enganchar listeners.
+ * Se usa después de importar un backup que incluye configuración.
+ */
+export function aplicarTemaGuardado() {
+    aplicarTema(temaActual(), false);
+}
+
 export function iniciarTema() {
     aplicarTema(temaActual(), false);
 

@@ -74,6 +74,14 @@
 
         <h2>Lanas</h2>
 
+    <div class="form-group full-width">
+        <label for="lanaInventarioId">Lana del inventario (opcional)</label>
+        <select id="lanaInventarioId">
+            <option value="">Sin vincular (no descuenta stock)</option>
+        </select>
+        <small class="info-text" id="lanaInventarioInfo">Elegí una lana para descontar ese ovillo exacto al calcular.</small>
+    </div>
+
     <div class="info">
         <div class="form-group">
             <label for="colorLana">Color</label>
@@ -106,6 +114,14 @@
 
     <div class="relleno">
         <h2>Relleno</h2>
+
+        <div class="form-group full-width">
+            <label for="rellenoInventarioId">Relleno del inventario (opcional)</label>
+            <select id="rellenoInventarioId">
+                <option value="">Sin vincular (no descuenta stock)</option>
+            </select>
+            <small class="info-text" id="rellenoInventarioInfo">Elegí un relleno para descontar ese paquete exacto al calcular.</small>
+        </div>
 
         <div class="info">
             <div class="form-group">
@@ -142,8 +158,16 @@
 
         <h2>Componentes</h2>
 
+        <div class="form-group full-width">
+            <label for="componenteInventarioId">Material del inventario (opcional)</label>
+            <select id="componenteInventarioId">
+                <option value="">Sin vincular (no descuenta stock)</option>
+            </select>
+            <small class="info-text" id="componenteInventarioInfo">Elegí un componente para descontar unidades exactas al calcular.</small>
+        </div>
+
         <div class="form-group">
-            <label for="tipoComponente">Componentes</label>
+            <label for="tipoComponente">Categoría del componente</label>
 
             <select id="tipoComponente">
                 <option value="">Seleccionar...</option>
@@ -199,54 +223,6 @@
 
         <p class="info-text">Si dejás el valor por hora vacío, el cálculo se hace igual y la mano de obra no se suma al total.</p>
     </div>
-
-    <details class="escalador" id="escaladorTamano">
-        <summary>
-            <span class="escalador-titulo">Escalar por tamaño</span>
-            <span class="escalador-hint">¿Cuánto sale en otro tamaño?</span>
-        </summary>
-
-        <div class="escalador-cuerpo">
-            <p class="info-text">
-                Cargá un modelo base (el que ya tejiste o tenés medido) y el tamaño que querés hacer:
-                la app estima la lana, el relleno y las horas, y podés aplicarlos al formulario.
-            </p>
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="escalaTamanoBase">Tamaño base (cm)</label>
-                    <input id="escalaTamanoBase" type="number" step="0.5" min="1" placeholder="Ej: 18">
-                </div>
-
-                <div class="form-group">
-                    <label for="escalaTamanoDestino">Tamaño deseado (cm)</label>
-                    <input id="escalaTamanoDestino" type="number" step="0.5" min="1" placeholder="Ej: 25">
-                </div>
-
-                <div class="form-group">
-                    <label for="escalaGramosLana">Lana del modelo base (g)</label>
-                    <input id="escalaGramosLana" type="number" step="1" min="0" placeholder="Ej: 55">
-                </div>
-
-                <div class="form-group">
-                    <label for="escalaGramosRelleno">Relleno del modelo base (g)</label>
-                    <input id="escalaGramosRelleno" type="number" step="1" min="0" placeholder="Ej: 90">
-                </div>
-
-                <div class="form-group">
-                    <label for="escalaHoras">Horas del modelo base</label>
-                    <input id="escalaHoras" type="number" step="0.5" min="0" placeholder="Ej: 5">
-                </div>
-            </div>
-
-            <div class="acciones acciones-escala">
-                <button type="button" id="btnEscalar" class="btn-secundario">Calcular escalado</button>
-                <button type="button" id="btnUsarEscala" class="btn-secundario" style="display:none;">Usar estos valores</button>
-            </div>
-
-            <div id="resultadoEscala" class="resultado-escala" style="display:none;" aria-live="polite"></div>
-        </div>
-    </details>
 
     <div class="venta">
         <h2>Precio de Venta</h2>
@@ -626,6 +602,7 @@
                         </datalist>
                         <button type="button" id="btnAgregarMaterialPatron">+ Añadir</button>
                     </div>
+                    <p class="info-text">Unidades: g, kg, ud, m, cm, ml. Si no indicás unidad, se interpretan unidades (ud.).</p>
                     <div id="listaMaterialesPatron" class="lista-materiales"></div>
                 </div>
                 <div class="form-group full-width">

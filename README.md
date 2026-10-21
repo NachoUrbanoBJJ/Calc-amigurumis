@@ -14,23 +14,31 @@ componentes y mano de obra), guardar patrones, planificar proyectos y administra
 - **Duplicar proyectos**: crea una copia independiente (nuevo id, secciones y fechas) al instante.
 - **Exportar**: cada proyecto y patrón se puede descargar en **PDF** (vista de impresión), **CSV**
   (compatible con Excel es-AR) y **PNG** (resumen en imagen).
-- **Escalar por tamaño**: cargás un modelo base (tamaño, lana, relleno y horas) y el tamaño
-  deseado; la app estima el material y las horas (lana ~altura², relleno ~altura²·³, horas
-  ~altura^1,7) y podés aplicarlos al formulario.
 - **Inventario**: lanas, rellenos y componentes con stock disponible; se pueden **editar y eliminar**.
 - **Alertas de stock**: cada material muestra `Sin stock` / `Stock bajo` y hay un resumen arriba.
-- **Descuento de stock**: al presionar _Calcular_ (con confirmación) se descuenta del inventario;
-  si no alcanza, avisa cuánto faltó.
+- **Materiales por ID**: la calculadora permite elegir una lana, un relleno o un componente exacto
+  del inventario. El stock se descuenta por ese `id`, nunca por el texto de color/marca/tipo.
+- **Descuento de stock confirmado**: al presionar _Calcular_ se muestra un resumen con el material y
+  la cantidad exacta. Si cancelás, el inventario no cambia; si confirmás, se descuenta sólo lo
+  vinculado y se avisa si el stock no alcanza. Los materiales manuales no tocan el inventario.
+- **Proyectos reabribles**: al guardar un cálculo se guarda una _snapshot_ de todas las entradas
+  (lana, relleno, componentes, horas, margen y precio). Al elegir “Calcular” en un proyecto se
+  vuelven a cargar esos datos. Los proyectos viejos sin snapshot precargan los materiales usados.
 - **Componentes de la calculadora**: se pueden agregar, **editar y eliminar** antes de calcular.
+- **Unidades de patrones**: `g`, `kg`, `ud`, `m`, `cm` y `ml` (con alias como “gramos” o “unidades”).
+  La disponibilidad compara peso contra lanas/rellenos y unidades contra componentes; longitudes y
+  volúmenes se muestran como “no verificable” en vez de un falso faltante.
 - **Categorías editables**: las categorías de componentes se administran desde Inventario (agregar,
   editar, eliminar) y alimentan la calculadora y las sugerencias del inventario.
 - **Planificador de proyectos**: secciones (puntos, vueltas, altura, notas), estado (planificando/terminado).
 - **Patrones**: código legible `PAT-0001`, materiales estructurados, búsqueda por nombre/código y
   chips por categoría (mapeo). Se puede crear un proyecto a partir de un patrón.
-- **Backup**: exportar/importar todo (inventario + proyectos + patrones + categorías) en JSON.
+- **Backup v4**: exportar/importar todo (inventario + proyectos con snapshots + patrones +
+  categorías + configuración de tema/valor por hora) en JSON.
 - **PWA**: instalable en PC y Android, funciona sin conexión.
 - **Robustez**: guardado a prueba de fallos (avisa si el almacenamiento está lleno o bloqueado),
-  sin descuentos de stock duplicados, avisos globales ante errores inesperados.
+  descuento de stock sobre una copia de seguridad (cancelar no muta nada), sin descuentos duplicados
+  dentro del mismo cálculo y avisos globales ante errores inesperados.
 - **UX**: diálogos propios (no `alert`/`confirm` del navegador) y la app recuerda la última sección.
 - **Accesibilidad y diseño**: foco visible, enlace “Saltar al contenido”, `aria-current` en la
   navegación, etiquetas en todos los campos, teclado numérico en móvil (`inputmode`), controles de
@@ -87,9 +95,11 @@ Calcuadora/
 ├── js/
 │   ├── calculos.js         # Lógica pura de cálculos (sin DOM)
 │   ├── ui.js               # Helpers de render de la interfaz
-│   ├── inventario.js       # Inventario + descuento de stock (datos)
+│   ├── inventario.js       # Inventario + descuento de stock por id (datos)
+│   ├── selectores-inventario.js # Desplegables de materiales del inventario
+│   ├── unidades.js         # Normalización y conversión de unidades de patrones
 │   ├── categorias.js       # Categorías de componentes (datos + persistencia)
-│   ├── planificador.js     # Proyectos y patrones (datos + persistencia)
+│   ├── planificador.js     # Proyectos (con snapshot de entradas) y patrones
 │   ├── exportar.js         # Exportación a CSV, PDF (impresión) y PNG (canvas)
 │   ├── tema.js             # Tema claro / oscuro / automático
 │   ├── utils.js            # Utilidades de DOM y formato
@@ -122,7 +132,7 @@ Calcuadora/
 | Clave                                       | Contenido                                                     |
 | ------------------------------------------- | ------------------------------------------------------------- |
 | `calc-amigurumis-inventario-v1`             | Lanas, rellenos y componentes.                                |
-| `calc-amigurumis-proyectos-v2`              | Proyectos (planificando/terminados).                          |
+| `calc-amigurumis-proyectos-v2`              | Proyectos, costo, materiales usados y snapshot de entradas.   |
 | `calc-amigurumis-patrones-v2`               | Patrones con código `PAT-000x`.                               |
 | `calc-amigurumis-config-v1`                 | Configuración (tema, último valor por hora + última sección). |
 | `calc-amigurumis-categorias-componentes-v1` | Categorías de componentes.                                    |
@@ -141,9 +151,11 @@ Ver [`ROADMAP.md`](./ROADMAP.md). Resumen:
   oscuro, accesibilidad, impresión y mejoras móviles.
 - ✅ Bloque QA: auditoría funcional completa (cálculos, guardado, stock, exportación, backup)
   y contraste de precios contra el mercado real argentino.
-- ✅ Bloque S: escalado por tamaño (lana por superficie, relleno por volumen, horas por puntos).
-- ⬜ Bloques 5-7: backup avanzado (v4 + recordatorios), sincronización y empaquetado nativo
-  (Capacitor).
+- ✅ Bloque I: inventario por id, descuento confirmado, snapshots de proyectos, unidades de patrones
+  y backup v4 con configuración.
+- ✅ **57/57 tests** unitarios, `lint`, `format:check` y `build` OK.
+- ⬜ Pendientes: app Android con Capacitor (Bloques 6–7), sincronización en la nube, empaquetado
+  nativo para Windows y expansión del Bloque 8.
 
 ## Precios y mercado (referencia)
 

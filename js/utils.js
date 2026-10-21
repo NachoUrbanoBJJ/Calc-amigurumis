@@ -113,8 +113,15 @@ export function descargarJson(nombreArchivo, datos) {
     const a = document.createElement("a");
     a.href = url;
     a.download = nombreArchivo;
+    a.style.display = "none";
+
+    // El anchor debe estar en el documento para que algunos navegadores
+    // (Safari, WebViews) inicien la descarga. Revocamos la URL con demora para
+    // no cancelarla antes de que el navegador la lea.
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
 // ---------------------------------------------------------------------------

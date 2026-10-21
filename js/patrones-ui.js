@@ -13,6 +13,7 @@ import {
 import { renderProyectos, abrirEditorProyecto } from "./planificador-ui.js";
 import { confirmar, mostrarAviso } from "./modal.js";
 import { imprimirPatron, descargarPatronCSV, descargarPatronPNG } from "./exportar.js";
+import { normalizarUnidad, categoriaUnidad, convertirUnidad, formatearCantidadUnidad } from "./unidades.js";
 
 // ---------------------------------------------------------------------------
 // Formulario de patrón
@@ -69,7 +70,7 @@ async function agregarMaterialPatron() {
         await mostrarAviso("La cantidad no puede ser negativa.", { titulo: "Revisá el dato" });
         return;
     }
-    const unidad = texto("patronMatUnidad");
+    const unidad = normalizarUnidad(texto("patronMatUnidad"));
 
     estado.materialesForm.push({ id: generarId(), nombre, cantidad, unidad });
     limpiarCampos(["patronMatNombre", "patronMatCantidad", "patronMatUnidad"]);
@@ -106,49 +107,76 @@ export function renderMaterialesForm() {
 
 /**
  * Estima si un material del patrón está disponible en el inventario.
- * Compara por nombre (tolerante) contra lanas/rellenos (peso) o componentes (unidades).
+ *
+ * - Peso (g/kg): compara contra lanas y rellenos, convirtiendo a gramos.
+ * - Cantidad (ud, o sin unidad): compara contra componentes.
+ * - Longitud/volumen: el inventario no guarda esas medidas, así que se
+ *   informa "no verificable" en vez de un falso "faltante".
+ *
+ * La comparación por nombre sigue siendo tolerante, pero nunca mezcla gramos
+ * con unidades.
  */
 function calcularDisponibilidadMaterial(mat) {
-    const n = normalizar(mat.nombre);
-    if (!n) return { estado: "sin-datos", disponible: 0 };
+    const nombre = normalizar(mat.nombre);
+    if (!nombre) return { estado: "sin-datos", disponible: 0, unidadBase: normalizarUnidad(mat.unidad) };
 
-    const coincide = (t) => coincideTexto(mat.nombre, t) && !!normalizar(t);
-
-    const unidad = normalizar(mat.unidad);
-    const esPeso = ["g", "gr", "grs", "gramo", "gramos", "kg"].includes(unidad);
-    const esUnidad = ["", "ud", "uds", "unidad", "unidades", "u"].includes(unidad);
-
-    let disponible = 0;
-    let hallado = false;
-
+    const coincide = (textoInventario) => coincideTexto(mat.nombre, textoInventario) && !!normalizar(textoInventario);
+    const unidad = normalizarUnidad(mat.unidad);
+    const categoria = categoriaUnidad(unidad);
+    const cantidad = Number(mat.cantidad) || 0;
     const inventario = estado.inventario || { lanas: [], rellenos: [], componentes: [] };
 
-    if (esPeso || esUnidad) {
-        (inventario.lanas || []).forEach((l) => {
-            if (coincide(l.color) || coincide(l.marca)) {
-                disponible += Number(l.gramosDisponibles) || 0;
+    if (categoria === "peso") {
+        const requerido = convertirUnidad(cantidad, unidad, "g");
+        if (requerido === null) return { estado: "no-verificable", disponible: 0, unidadBase: "g" };
+
+        let disponible = 0;
+        let hallado = false;
+
+        (inventario.lanas || []).forEach((lana) => {
+            if (coincide(lana.color) || coincide(lana.marca)) {
+                disponible += Number(lana.gramosDisponibles) || 0;
                 hallado = true;
             }
         });
-        (inventario.rellenos || []).forEach((r) => {
-            if (coincide(r.tipo) || coincide(r.marca)) {
-                disponible += Number(r.gramosDisponibles) || 0;
+        (inventario.rellenos || []).forEach((relleno) => {
+            if (coincide(relleno.tipo) || coincide(relleno.marca)) {
+                disponible += Number(relleno.gramosDisponibles) || 0;
                 hallado = true;
             }
         });
-    }
-    if (esUnidad) {
-        (inventario.componentes || []).forEach((c) => {
-            if (coincide(c.tipo)) {
-                disponible += Number(c.cantidadDisponible) || 0;
-                hallado = true;
-            }
-        });
+
+        if (!hallado) return { estado: "faltante", disponible: 0, unidadBase: "g" };
+        if (requerido > 0 && disponible < requerido) {
+            return { estado: "insuficiente", disponible, unidadBase: "g", requerido };
+        }
+        return { estado: "ok", disponible, unidadBase: "g", requerido };
     }
 
-    if (!hallado) return { estado: "faltante", disponible: 0 };
-    if (mat.cantidad > 0 && disponible < mat.cantidad) return { estado: "insuficiente", disponible };
-    return { estado: "ok", disponible };
+    if (categoria === "cantidad") {
+        let disponible = 0;
+        let hallado = false;
+        (inventario.componentes || []).forEach((componente) => {
+            if (coincide(componente.tipo)) {
+                disponible += Number(componente.cantidadDisponible) || 0;
+                hallado = true;
+            }
+        });
+
+        if (!hallado) return { estado: "faltante", disponible: 0, unidadBase: "ud" };
+        if (cantidad > 0 && disponible < cantidad) {
+            return { estado: "insuficiente", disponible, unidadBase: "ud", requerido: cantidad };
+        }
+        return { estado: "ok", disponible, unidadBase: "ud", requerido: cantidad };
+    }
+
+    return {
+        estado: "no-verificable",
+        disponible: 0,
+        unidadBase: unidad,
+        requerido: cantidad,
+        categoria,
+    };
 }
 
 const btnCancelarEdicionPatron = document.getElementById("btnCancelarEdicionPatron");
@@ -326,12 +354,18 @@ function renderDetallePatron(p) {
         html += `<ul class="lista-materiales-detalle">`;
         materiales.forEach((m) => {
             const disp = calcularDisponibilidadMaterial(m);
-            const cant = `${m.cantidad ? `${m.cantidad}` : ""}${m.unidad ? ` ${m.unidad}` : ""}`.trim();
+            const unidadPedido = normalizarUnidad(m.unidad);
+            const cant = m.cantidad ? formatearCantidadUnidad(m.cantidad, unidadPedido) : unidadPedido;
+            const disponible = formatearCantidadUnidad(disp.disponible, disp.unidadBase);
             let estado_;
             if (disp.estado === "ok") {
-                estado_ = `<span class="badge-ok">✅ ${disp.disponible}${m.unidad ? " " + m.unidad : ""} en inventario</span>`;
+                estado_ = `<span class="badge-ok">✅ ${escapeHtml(disponible)} en inventario</span>`;
             } else if (disp.estado === "insuficiente") {
-                estado_ = `<span class="badge-pending">⚠️ Solo ${disp.disponible}${m.unidad ? " " + m.unidad : ""} en inventario</span>`;
+                estado_ = `<span class="badge-pending">⚠️ Solo ${escapeHtml(disponible)} en inventario</span>`;
+            } else if (disp.estado === "no-verificable") {
+                estado_ = `<span class="badge-pending">ℹ️ No se puede verificar con el inventario${disp.unidadBase ? ` (${escapeHtml(disp.unidadBase)})` : ""}</span>`;
+            } else if (disp.estado === "sin-datos") {
+                estado_ = `<span class="badge-pending">ℹ️ Faltan datos para verificar</span>`;
             } else {
                 estado_ = `<span class="badge-pending">❌ No está en inventario</span>`;
             }

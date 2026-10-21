@@ -3,6 +3,8 @@ import { descargarJson, esObjeto } from "./utils.js";
 import { normalizarPatrones, normalizarProyecto, guardarPatrones, guardarProyectos } from "./planificador.js";
 import { guardarInventario, normalizarInventario } from "./inventario.js";
 import { normalizarCategorias, guardarCategorias } from "./categorias.js";
+import { cargarConfig, guardarConfig } from "./config.js";
+import { aplicarTemaGuardado } from "./tema.js";
 import { renderAll } from "./render.js";
 import { confirmar, mostrarAviso } from "./modal.js";
 
@@ -12,12 +14,14 @@ import { confirmar, mostrarAviso } from "./modal.js";
 const btnExportarTodo = document.getElementById("btnExportarTodo");
 if (btnExportarTodo) {
     btnExportarTodo.addEventListener("click", () => {
-        descargarJson(`backup-amigurumis-${Date.now()}.json`, {
-            version: 3,
+        descargarJson(`backup-amigurumis-v4-${Date.now()}.json`, {
+            version: 4,
+            exportadoEn: new Date().toISOString(),
             inventario: estado.inventario,
             patrones: estado.patrones,
             proyectos: estado.proyectos,
             categorias: estado.categorias,
+            config: cargarConfig(),
         });
     });
 }
@@ -46,8 +50,9 @@ if (inputImportarTodo) {
                 const data = JSON.parse(ev.target.result);
                 if (!esObjeto(data)) throw new Error("Formato inválido");
 
+                const incluyeConfig = esObjeto(data.config);
                 const ok = await confirmar(
-                    "Esto reemplazará tus datos actuales (inventario, proyectos, patrones y categorías). ¿Continuar?",
+                    `Esto reemplazará tus datos actuales (inventario, proyectos, patrones y categorías)${incluyeConfig ? " y la configuración (tema y valor por hora)" : ""}. ¿Continuar?`,
                     { titulo: "Importar backup", ok: "Sí, reemplazar" }
                 );
                 if (!ok) {
@@ -84,6 +89,11 @@ if (inputImportarTodo) {
                     resumen.push(`${estado.categorias.length} categorías`);
                 }
 
+                if (incluyeConfig) {
+                    guardarConfig(data.config);
+                    resumen.push("configuración");
+                }
+
                 estado.proyectoActivo = null;
                 estado.proyectoSeleccionadoId = null;
                 estado.proyectoRevisadoId = null;
@@ -97,6 +107,7 @@ if (inputImportarTodo) {
                 guardarCategorias(estado.categorias);
 
                 renderAll();
+                if (incluyeConfig) aplicarTemaGuardado();
                 await mostrarAviso(
                     resumen.length
                         ? `Backup importado: ${resumen.join(", ")}.`

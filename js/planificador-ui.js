@@ -199,12 +199,25 @@ async function seleccionarParaCalcular(id) {
     estado.proyectoSeleccionadoId = id;
     renderBannerProyecto();
     irASeccion("calculadora");
-    await mostrarAviso(
-        `Proyecto seleccionado: ${p.nombre}\n\nCompletá la calculadora y el coste se guardará en este proyecto.`,
-        {
-            titulo: "Proyecto listo para calcular",
-        }
-    );
+
+    // La calculadora escucha este evento y repuebla el formulario con la
+    // snapshot de entradas del proyecto (o con los materiales usados si es
+    // un proyecto viejo).
+    document.dispatchEvent(new CustomEvent("proyecto-para-calcular", { detail: { proyecto: p } }));
+
+    const tieneSnapshot = !!p.entradas && typeof p.entradas === "object" && !Array.isArray(p.entradas);
+    const mat = p.materialesUsados || {};
+    const tieneMateriales =
+        !!mat.lana || !!mat.relleno || (Array.isArray(mat.componentes) && mat.componentes.length > 0);
+    const mensaje = tieneSnapshot
+        ? `Se cargaron los datos guardados de "${p.nombre}".\n\nRevisalos y tocá Calcular para actualizar el costo.`
+        : tieneMateriales
+          ? `Proyecto seleccionado: ${p.nombre}\n\nEste proyecto no tiene una snapshot de entradas. Precargué los materiales usados; completá precios y gramajes, y tocá Calcular.`
+          : `Proyecto seleccionado: ${p.nombre}\n\nCompletá la calculadora y el coste se guardará en este proyecto.`;
+
+    await mostrarAviso(mensaje, {
+        titulo: "Proyecto listo para calcular",
+    });
 }
 
 async function eliminarProyecto(id) {

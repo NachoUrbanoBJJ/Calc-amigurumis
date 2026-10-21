@@ -1,5 +1,5 @@
 import { estado, cargarConfig, guardarConfig, aplicarValorHoraPorDefecto } from "./estado.js";
-import { escapeHtml, texto, num, valor, mostrarAvisoGlobal } from "./utils.js";
+import { escapeHtml, texto, num, valor, mostrarAvisoGlobal, esObjeto } from "./utils.js";
 import { confirmar, mostrarAviso } from "./modal.js";
 import { mostrarComponente, formatearMoneda, mostrarListaComponentes, mostrarDesgloseComponentes } from "./ui.js";
 import {
@@ -9,12 +9,23 @@ import {
     calcularTotalComponentes,
     calcularPrecioIdeal,
     calcularVenta,
-    escalarPorTamano,
 } from "./calculos.js";
-import { descontarLana, descontarRelleno, descontarComponentes, guardarInventario } from "./inventario.js";
+import { descontarLanaPorId, descontarRellenoPorId, descontarComponentes, guardarInventario } from "./inventario.js";
 import { renderInventario } from "./inventario-ui.js";
 import { renderProyectos, renderBannerProyecto, obtenerProyectoSeleccionado } from "./planificador-ui.js";
 import { crearProyecto, guardarProyectos } from "./planificador.js";
+import {
+    actualizarInfoSelectores,
+    categoriaSugeridaComponente,
+    etiquetaComponente,
+    etiquetaLana,
+    etiquetaRelleno,
+    obtenerComponentePorId,
+    obtenerLanaPorId,
+    obtenerRellenoPorId,
+    renderSelectoresInventario,
+} from "./selectores-inventario.js";
+import { formatearCantidadUnidad } from "./unidades.js";
 
 // ---------------------------------------------------------------------------
 // Referencias del DOM
@@ -40,10 +51,73 @@ if (btnCancelarEdicionComponenteCalc) {
     btnCancelarEdicionComponenteCalc.addEventListener("click", () => cancelarEdicionComponente());
 }
 
-const btnEscalar = document.getElementById("btnEscalar");
-if (btnEscalar) btnEscalar.addEventListener("click", calcularEscala);
-const btnUsarEscala = document.getElementById("btnUsarEscala");
-if (btnUsarEscala) btnUsarEscala.addEventListener("click", usarEscala);
+const lanaInventario = document.getElementById("lanaInventarioId");
+if (lanaInventario) lanaInventario.addEventListener("change", aplicarInventarioLana);
+
+const rellenoInventario = document.getElementById("rellenoInventarioId");
+if (rellenoInventario) rellenoInventario.addEventListener("change", aplicarInventarioRelleno);
+
+const componenteInventario = document.getElementById("componenteInventarioId");
+if (componenteInventario) componenteInventario.addEventListener("change", aplicarInventarioComponente);
+
+// ---------------------------------------------------------------------------
+// Materiales del inventario vinculados al cálculo
+// ---------------------------------------------------------------------------
+function asignarCampo(id, valorCampo) {
+    const el = document.getElementById(id);
+    if (el) el.value = valorCampo == null ? "" : valorCampo;
+}
+
+function aplicarInventarioLana() {
+    const lana = obtenerLanaPorId(lanaInventario?.value || "");
+    if (lana) {
+        asignarCampo("colorLana", lana.color || "");
+        asignarCampo("marcaLana", lana.marca || "");
+        asignarCampo("precioOvillo", lana.precioOvillo || "");
+        asignarCampo("gramosOvillo", lana.gramosOvillo || "");
+    }
+    actualizarInfoSelectores();
+}
+
+function aplicarInventarioRelleno() {
+    const relleno = obtenerRellenoPorId(rellenoInventario?.value || "");
+    if (relleno) {
+        asignarCampo("tipoRelleno", relleno.tipo || "");
+        asignarCampo("marcaRelleno", relleno.marca || "");
+        asignarCampo("precioRelleno", relleno.precioRelleno || "");
+        asignarCampo("gramosRelleno", relleno.gramosRelleno || "");
+    }
+    actualizarInfoSelectores();
+}
+
+function aplicarInventarioComponente() {
+    const comp = obtenerComponentePorId(componenteInventario?.value || "");
+    if (!comp) {
+        actualizarInfoSelectores();
+        return;
+    }
+
+    if (tipoComponente) {
+        const categoria = categoriaSugeridaComponente(comp);
+        if (categoria) {
+            tipoComponente.value = categoria;
+        } else {
+            const existe = Array.from(tipoComponente.options).some((opcion) => opcion.value === comp.tipo);
+            if (!existe) {
+                const opcion = document.createElement("option");
+                opcion.value = comp.tipo;
+                opcion.textContent = comp.tipo;
+                tipoComponente.appendChild(opcion);
+            }
+            tipoComponente.value = comp.tipo;
+        }
+        mostrarComponente(datosComponentes, tipoComponente);
+    }
+
+    asignarCampo("cantidadComprada", comp.cantidadComprada);
+    asignarCampo("precioCompra", comp.precioCompra);
+    actualizarInfoSelectores();
+}
 
 // ---------------------------------------------------------------------------
 // Componentes (alta, edición y baja)
@@ -81,6 +155,8 @@ function cancelarEdicionComponente() {
         const el = document.getElementById(id);
         if (el) el.value = "";
     });
+    if (componenteInventario) componenteInventario.value = "";
+    actualizarInfoSelectores();
     actualizarBotonComponente();
 }
 
@@ -93,10 +169,14 @@ function editarComponente(idx) {
         tipoComponente.value = comp.tipo;
         mostrarComponente(datosComponentes, tipoComponente);
     }
+    if (componenteInventario) {
+        componenteInventario.value = obtenerComponentePorId(comp.inventarioId) ? comp.inventarioId : "";
+    }
     ["cantidadComprada", "precioCompra", "cantidadUtilizada"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = comp[id];
     });
+    actualizarInfoSelectores();
     actualizarBotonComponente();
 
     const primero = document.getElementById("cantidadComprada");
@@ -126,12 +206,19 @@ async function eliminarComponente(idx) {
 
 async function agregarComponente() {
     const tipo = tipoComponente ? tipoComponente.value : "";
+    const inventarioId = componenteInventario ? componenteInventario.value || null : null;
     const cantidadComprada = Number(valor("cantidadComprada"));
     const precioCompra = Number(valor("precioCompra"));
     const cantidadUtilizada = Number(valor("cantidadUtilizada"));
 
     if (!tipo) {
         await mostrarAviso("Seleccioná un tipo de componente.");
+        return;
+    }
+    if (inventarioId && !obtenerComponentePorId(inventarioId)) {
+        await mostrarAviso("El componente elegido ya no está en el inventario. Volvé a seleccionarlo.", {
+            titulo: "Material no disponible",
+        });
         return;
     }
     if (valor("cantidadComprada") === "" || !Number.isInteger(cantidadComprada) || cantidadComprada <= 0) {
@@ -155,7 +242,7 @@ async function agregarComponente() {
         return;
     }
 
-    const nuevo = { tipo, cantidadComprada, precioCompra, cantidadUtilizada };
+    const nuevo = { tipo, cantidadComprada, precioCompra, cantidadUtilizada, inventarioId };
 
     if (editandoComponenteIdx !== null) {
         if (estado.componentes[editandoComponenteIdx]) estado.componentes[editandoComponenteIdx] = nuevo;
@@ -166,6 +253,8 @@ async function agregarComponente() {
             const el = document.getElementById(id);
             if (el) el.value = "";
         });
+        if (componenteInventario) componenteInventario.value = "";
+        actualizarInfoSelectores();
     }
 
     pintarComponentes();
@@ -202,8 +291,18 @@ function calcularCostoActual() {
     costo.margen = venta.margen;
 
     const materialesUsados = {
-        lana: { color: texto("colorLana"), marca: texto("marcaLana"), gramosUsados: num("gramosUsados") },
-        relleno: { tipo: texto("tipoRelleno"), marca: texto("marcaRelleno"), gramosUsados: num("rellenoUsado") },
+        lana: {
+            inventarioId: valor("lanaInventarioId") || null,
+            color: texto("colorLana"),
+            marca: texto("marcaLana"),
+            gramosUsados: num("gramosUsados"),
+        },
+        relleno: {
+            inventarioId: valor("rellenoInventarioId") || null,
+            tipo: texto("tipoRelleno"),
+            marca: texto("marcaRelleno"),
+            gramosUsados: num("rellenoUsado"),
+        },
         componentes: JSON.parse(JSON.stringify(estado.componentes)),
     };
 
@@ -230,6 +329,25 @@ function validarCalculadora() {
             errores.push(`"${etiqueta}" no puede ser negativo.`);
         }
     });
+
+    // Los materiales vinculados al inventario deben seguir existiendo al
+    // momento de calcular (pudieron eliminarse desde la otra sección).
+    const lanaId = valor("lanaInventarioId");
+    if (lanaId && !obtenerLanaPorId(lanaId)) {
+        errores.push("La lana elegida ya no está en el inventario. Volvé a seleccionarla.");
+    }
+    const rellenoId = valor("rellenoInventarioId");
+    if (rellenoId && !obtenerRellenoPorId(rellenoId)) {
+        errores.push("El relleno elegido ya no está en el inventario. Volvé a seleccionarlo.");
+    }
+    const componenteInvalido = estado.componentes.find(
+        (c) => c.inventarioId && !obtenerComponentePorId(c.inventarioId)
+    );
+    if (componenteInvalido) {
+        errores.push(
+            `El componente "${componenteInvalido.tipo}" ya no está en el inventario. Volvé a seleccionarlo o quitá el vínculo.`
+        );
+    }
 
     // Lana: si usás gramos, necesitás precio y gramos del ovillo
     if (num("gramosUsados") > 0) {
@@ -300,84 +418,6 @@ function mostrarErroresCalculadora(errores) {
         "<strong>Revisá estos datos:</strong><ul>" + errores.map((e) => `<li>${escapeHtml(e)}</li>`).join("") + "</ul>";
     cont.style.display = "block";
     cont.scrollIntoView({ behavior: "smooth", block: "nearest" });
-}
-
-// ---------------------------------------------------------------------------
-// Escalado por tamaño
-// ---------------------------------------------------------------------------
-let ultimaEscala = null;
-
-function pintarEscala(resultado, base, destino) {
-    const cont = document.getElementById("resultadoEscala");
-    const btnUsar = document.getElementById("btnUsarEscala");
-    if (!cont) return;
-
-    if (!resultado) {
-        cont.style.display = "none";
-        cont.innerHTML = "";
-        if (btnUsar) btnUsar.style.display = "none";
-        return;
-    }
-
-    const fila = (etiqueta, valor, factor) =>
-        `<div class="resultado-item"><span>${escapeHtml(etiqueta)}:</span><span>${escapeHtml(valor)} <small class="factor">×${factor}</small></span></div>`;
-
-    cont.innerHTML =
-        `<div class="escala-encabezado">De <strong>${escapeHtml(base)} cm</strong> a <strong>${escapeHtml(destino)} cm</strong></div>` +
-        fila("Lana estimada", `${resultado.gramosLana} g`, resultado.factores.lana) +
-        fila("Relleno estimado", `${resultado.gramosRelleno} g`, resultado.factores.relleno) +
-        fila("Horas estimadas", `${resultado.horas} h`, resultado.factores.horas);
-    cont.style.display = "block";
-
-    if (btnUsar) btnUsar.style.display = "";
-}
-
-function calcularEscala() {
-    const base = num("escalaTamanoBase");
-    const destino = num("escalaTamanoDestino");
-
-    if (base <= 0 || destino <= 0) {
-        ultimaEscala = null;
-        pintarEscala(null);
-        mostrarAvisoEscala("Cargá el tamaño base y el tamaño deseado (mayores a 0).");
-        return;
-    }
-
-    const resultado = escalarPorTamano(base, destino, {
-        gramosLana: num("escalaGramosLana"),
-        gramosRelleno: num("escalaGramosRelleno"),
-        horas: num("escalaHoras"),
-    });
-
-    ultimaEscala = { resultado, base, destino };
-    pintarEscala(resultado, base, destino);
-}
-
-function mostrarAvisoEscala(mensaje) {
-    const cont = document.getElementById("resultadoEscala");
-    if (!cont) return;
-    cont.innerHTML = `<div class="escala-aviso">${escapeHtml(mensaje)}</div>`;
-    cont.style.display = "block";
-    const btnUsar = document.getElementById("btnUsarEscala");
-    if (btnUsar) btnUsar.style.display = "none";
-}
-
-function usarEscala() {
-    if (!ultimaEscala) return;
-    const r = ultimaEscala.resultado;
-
-    const asignar = (id, v) => {
-        const el = document.getElementById(id);
-        if (el) el.value = v;
-    };
-    if (r.gramosLana > 0) asignar("gramosUsados", r.gramosLana);
-    if (r.gramosRelleno > 0) asignar("rellenoUsado", r.gramosRelleno);
-    if (r.horas > 0) asignar("horasTrabajadas", r.horas);
-
-    const detalle = document.getElementById("escaladorTamano");
-    if (detalle && typeof detalle.open === "boolean") detalle.open = false;
-
-    mostrarAvisoGlobal("Valores escalados aplicados. Revisá y tocá Calcular.", "info");
 }
 
 async function calcularTodo() {
@@ -452,19 +492,15 @@ function limpiarTodo() {
         "nombreProyectoCalc",
         "margenGanancia",
         "precioVentaManual",
-        "escalaTamanoBase",
-        "escalaTamanoDestino",
-        "escalaGramosLana",
-        "escalaGramosRelleno",
-        "escalaHoras",
+        "lanaInventarioId",
+        "rellenoInventarioId",
+        "componenteInventarioId",
     ].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.value = "";
     });
 
-    ultimaEscala = null;
-    pintarEscala(null);
-
+    renderSelectoresInventario();
     aplicarValorHoraPorDefecto();
 
     estado.componentes.length = 0;
@@ -492,22 +528,209 @@ function limpiarTodo() {
     if (tipoComponente) mostrarComponente(datosComponentes, tipoComponente);
 }
 
+// ---------------------------------------------------------------------------
+// Snapshot de entradas del proyecto
+// ---------------------------------------------------------------------------
+const CAMPOS_ENTRADA = [
+    "colorLana",
+    "marcaLana",
+    "precioOvillo",
+    "gramosOvillo",
+    "gramosUsados",
+    "tipoRelleno",
+    "marcaRelleno",
+    "precioRelleno",
+    "gramosRelleno",
+    "rellenoUsado",
+    "horasTrabajadas",
+    "valorHoras",
+    "margenGanancia",
+    "precioVentaManual",
+];
+
+/**
+ * Guarda exactamente lo que el usuario cargó en la calculadora, para poder
+ * reabrir el proyecto sin depender de que el inventario no haya cambiado.
+ */
+function capturarEntradas() {
+    return {
+        version: 1,
+        lana: {
+            inventarioId: valor("lanaInventarioId") || null,
+            color: texto("colorLana"),
+            marca: texto("marcaLana"),
+            precioOvillo: valor("precioOvillo"),
+            gramosOvillo: valor("gramosOvillo"),
+            gramosUsados: valor("gramosUsados"),
+        },
+        relleno: {
+            inventarioId: valor("rellenoInventarioId") || null,
+            tipo: texto("tipoRelleno"),
+            marca: texto("marcaRelleno"),
+            precioRelleno: valor("precioRelleno"),
+            gramosRelleno: valor("gramosRelleno"),
+            rellenoUsado: valor("rellenoUsado"),
+        },
+        manoObra: {
+            horasTrabajadas: valor("horasTrabajadas"),
+            valorHoras: valor("valorHoras"),
+        },
+        venta: {
+            margenGanancia: valor("margenGanancia"),
+            precioVentaManual: valor("precioVentaManual"),
+        },
+        componentes: estado.componentes.map((componente) => ({ ...componente })),
+    };
+}
+
+function asignarEntrada(id, valorCampo) {
+    const el = document.getElementById(id);
+    if (el) el.value = valorCampo == null ? "" : String(valorCampo);
+}
+
+function limpiarFormularioCalculo() {
+    [
+        ...CAMPOS_ENTRADA,
+        "nombreProyectoCalc",
+        "lanaInventarioId",
+        "rellenoInventarioId",
+        "componenteInventarioId",
+    ].forEach((id) => asignarEntrada(id, ""));
+    if (tipoComponente) tipoComponente.value = "";
+    ["cantidadComprada", "precioCompra", "cantidadUtilizada"].forEach((id) => asignarEntrada(id, ""));
+
+    estado.componentes = [];
+    editandoComponenteIdx = null;
+    pintarComponentes();
+    renderSelectoresInventario();
+    actualizarInfoSelectores();
+
+    firmaDescontada = null;
+    if (resultados) resultados.style.display = "none";
+    const desglose = document.getElementById("desgloseComponentes");
+    if (desglose) desglose.innerHTML = "";
+    const avisoStock = document.getElementById("avisoStock");
+    if (avisoStock) avisoStock.textContent = "";
+    mostrarErroresCalculadora([]);
+    if (tipoComponente) mostrarComponente(datosComponentes, tipoComponente);
+}
+
+function componenteDesdeSnapshot(componente) {
+    if (!esObjeto(componente)) return null;
+    const tipo = String(componente.tipo || "").trim();
+    if (!tipo) return null;
+
+    const inventarioId = componente.inventarioId || null;
+    return {
+        tipo,
+        cantidadComprada: Number(componente.cantidadComprada) || 0,
+        precioCompra: Number(componente.precioCompra) || 0,
+        cantidadUtilizada: Number(componente.cantidadUtilizada) || 0,
+        inventarioId: inventarioId && obtenerComponentePorId(inventarioId) ? inventarioId : null,
+    };
+}
+
+/**
+ * Restaura la calculadora con la snapshot guardada en el proyecto.
+ * Para proyectos viejos (sin snapshot) precarga lo que haya en
+ * `materialesUsados`; los precios/gramajes que no se guardaban quedan vacíos.
+ */
+function restaurarEntradasProyecto(proyecto) {
+    if (!proyecto) return;
+
+    const entradas = esObjeto(proyecto.entradas) ? proyecto.entradas : null;
+    const materiales = esObjeto(proyecto.materialesUsados) ? proyecto.materialesUsados : {};
+
+    const lana = entradas && esObjeto(entradas.lana) ? entradas.lana : esObjeto(materiales.lana) ? materiales.lana : {};
+    const relleno =
+        entradas && esObjeto(entradas.relleno)
+            ? entradas.relleno
+            : esObjeto(materiales.relleno)
+              ? materiales.relleno
+              : {};
+    const manoObra = entradas && esObjeto(entradas.manoObra) ? entradas.manoObra : {};
+    const venta = entradas && esObjeto(entradas.venta) ? entradas.venta : {};
+
+    limpiarFormularioCalculo();
+
+    const lanaId = lana.inventarioId && obtenerLanaPorId(lana.inventarioId) ? lana.inventarioId : "";
+    const rellenoId = relleno.inventarioId && obtenerRellenoPorId(relleno.inventarioId) ? relleno.inventarioId : "";
+    const desvinculados = [];
+
+    if (lana.inventarioId && !lanaId) desvinculados.push("lana");
+    if (relleno.inventarioId && !rellenoId) desvinculados.push("relleno");
+
+    asignarEntrada("lanaInventarioId", lanaId);
+    asignarEntrada("colorLana", lana.color);
+    asignarEntrada("marcaLana", lana.marca);
+    asignarEntrada("precioOvillo", lana.precioOvillo);
+    asignarEntrada("gramosOvillo", lana.gramosOvillo);
+    asignarEntrada("gramosUsados", lana.gramosUsados);
+
+    asignarEntrada("rellenoInventarioId", rellenoId);
+    asignarEntrada("tipoRelleno", relleno.tipo);
+    asignarEntrada("marcaRelleno", relleno.marca);
+    asignarEntrada("precioRelleno", relleno.precioRelleno);
+    asignarEntrada("gramosRelleno", relleno.gramosRelleno);
+    asignarEntrada(
+        "rellenoUsado",
+        entradas && esObjeto(entradas.relleno) ? relleno.rellenoUsado : relleno.gramosUsados
+    );
+
+    asignarEntrada("horasTrabajadas", manoObra.horasTrabajadas);
+    asignarEntrada("valorHoras", manoObra.valorHoras);
+    asignarEntrada("margenGanancia", venta.margenGanancia);
+    asignarEntrada("precioVentaManual", venta.precioVentaManual);
+
+    const componentes = Array.isArray(entradas?.componentes)
+        ? entradas.componentes
+        : Array.isArray(materiales.componentes)
+          ? materiales.componentes
+          : [];
+    estado.componentes = componentes.map(componenteDesdeSnapshot).filter(Boolean);
+
+    const componentesDesaparecidos = componentes.some(
+        (c) => esObjeto(c) && c.inventarioId && !obtenerComponentePorId(c.inventarioId)
+    );
+    if (componentesDesaparecidos) desvinculados.push("componentes");
+
+    pintarComponentes();
+    renderSelectoresInventario();
+    actualizarInfoSelectores();
+
+    if (desvinculados.length) {
+        mostrarAvisoGlobal(
+            `ℹ️ Algunos materiales guardados ya no están en el inventario (${desvinculados.join(", ")}). Se cargaron como manuales y no descontarán stock.`,
+            "info"
+        );
+    }
+}
+
+document.addEventListener("proyecto-para-calcular", (evento) => {
+    const proyecto = evento.detail?.proyecto;
+    if (proyecto) restaurarEntradasProyecto(proyecto);
+});
+
 // Firma del último cálculo que descontó stock: evita descontar dos veces si se
 // aprieta "Calcular" repetidamente sin cambiar los datos.
 let firmaDescontada = null;
 
 function firmaCalculo() {
     return JSON.stringify({
-        lana: [texto("colorLana"), texto("marcaLana"), num("gramosUsados")],
-        relleno: [texto("tipoRelleno"), texto("marcaRelleno"), num("rellenoUsado")],
-        componentes: estado.componentes.map((c) => [c.tipo, c.cantidadUtilizada]),
+        lana: [valor("lanaInventarioId"), texto("colorLana"), texto("marcaLana"), num("gramosUsados")],
+        relleno: [valor("rellenoInventarioId"), texto("tipoRelleno"), texto("marcaRelleno"), num("rellenoUsado")],
+        componentes: estado.componentes.map((c) => [c.inventarioId, c.tipo, c.cantidadUtilizada]),
     });
 }
 
 /**
- * Descuenta stock del inventario (al presionar Calcular, con confirmación).
- * Si no hay material coincidente: calcula pero no actualiza el inventario.
- * Si el mismo cálculo ya se descontó, no lo vuelve a hacer.
+ * Descuenta stock del inventario al presionar Calcular.
+ *
+ * Reglas:
+ * - Sólo se descuenta lo que el usuario vinculó explícitamente por id desde
+ *   los selectores del inventario.
+ * - El cálculo se hace sobre una copia: si el usuario cancela, no se muta nada.
+ * - Si no hay materiales vinculados, se calcula el costo pero no se toca stock.
  */
 async function aplicarDescuentoInventario() {
     const aviso = document.getElementById("avisoStock");
@@ -521,45 +744,139 @@ async function aplicarDescuentoInventario() {
         return;
     }
 
-    const antes = JSON.parse(JSON.stringify(estado.inventario));
-    const preview = JSON.parse(JSON.stringify(estado.inventario));
+    const gramosLana = num("gramosUsados");
+    const gramosRelleno = num("rellenoUsado");
+    const lanaId = valor("lanaInventarioId") || "";
+    const rellenoId = valor("rellenoInventarioId") || "";
 
-    descontarLana(preview, { color: texto("colorLana"), marca: texto("marcaLana"), gramosUsados: num("gramosUsados") });
-    descontarRelleno(preview, {
-        tipo: texto("tipoRelleno"),
-        marca: texto("marcaRelleno"),
-        gramosUsados: num("rellenoUsado"),
-    });
-    descontarComponentes(preview, estado.componentes);
+    const solicitudes = [];
+    const sinVincular = [];
 
-    let gramosLana = 0;
-    antes.lanas.forEach((l, i) => {
-        gramosLana += l.gramosDisponibles - preview.lanas[i].gramosDisponibles;
-    });
-    let gramosRelleno = 0;
-    antes.rellenos.forEach((r, i) => {
-        gramosRelleno += r.gramosDisponibles - preview.rellenos[i].gramosDisponibles;
-    });
-    let componentesDescontados = 0;
-    antes.componentes.forEach((c, i) => {
-        componentesDescontados += c.cantidadDisponible - preview.componentes[i].cantidadDisponible;
+    if (gramosLana > 0) {
+        if (lanaId) {
+            solicitudes.push({
+                tipo: "lana",
+                inventarioId: lanaId,
+                etiqueta: etiquetaLana(obtenerLanaPorId(lanaId)) || "Lana seleccionada",
+                unidad: "g",
+                pedido: gramosLana,
+            });
+        } else {
+            sinVincular.push("lana");
+        }
+    }
+
+    if (gramosRelleno > 0) {
+        if (rellenoId) {
+            solicitudes.push({
+                tipo: "relleno",
+                inventarioId: rellenoId,
+                etiqueta: etiquetaRelleno(obtenerRellenoPorId(rellenoId)) || "Relleno seleccionado",
+                unidad: "g",
+                pedido: gramosRelleno,
+            });
+        } else {
+            sinVincular.push("relleno");
+        }
+    }
+
+    estado.componentes.forEach((componente) => {
+        const pedido = Number(componente.cantidadUtilizada) || 0;
+        if (pedido <= 0) return;
+        if (!componente.inventarioId) {
+            sinVincular.push("componente");
+            return;
+        }
+        solicitudes.push({
+            tipo: "componente",
+            inventarioId: componente.inventarioId,
+            etiqueta: etiquetaComponente(obtenerComponentePorId(componente.inventarioId)) || componente.tipo,
+            unidad: "ud",
+            pedido,
+        });
     });
 
-    gramosLana = Number(gramosLana.toFixed(3));
-    gramosRelleno = Number(gramosRelleno.toFixed(3));
-
-    const hayDescuento = gramosLana > 0 || gramosRelleno > 0 || componentesDescontados > 0;
-    if (!hayDescuento) {
-        if (aviso) aviso.textContent = "ℹ️ No se descontó stock: no hay material coincidente en el inventario.";
+    if (!solicitudes.length) {
+        if (aviso) {
+            aviso.textContent = sinVincular.length
+                ? "ℹ️ No se descontó stock: los materiales usados no están vinculados al inventario. Elegilos desde los desplegables."
+                : "ℹ️ No se descontó stock: no hay materiales del inventario vinculados a este cálculo.";
+        }
         return;
     }
 
-    const detalle = [];
-    if (gramosLana > 0) detalle.push(`• Lana: ${gramosLana} g`);
-    if (gramosRelleno > 0) detalle.push(`• Relleno: ${gramosRelleno} g`);
-    if (componentesDescontados > 0) detalle.push(`• Componentes: ${componentesDescontados} ud.`);
+    // Se trabaja sobre una copia: el inventario real sólo se reemplaza después
+    // de la confirmación explícita.
+    const preview = JSON.parse(JSON.stringify(estado.inventario));
 
-    if (!(await confirmar("¿Descontar del inventario?\n\n" + detalle.join("\n"), { titulo: "Confirmar descuento" }))) {
+    solicitudes.forEach((solicitud) => {
+        let resultado;
+        if (solicitud.tipo === "lana") {
+            resultado = descontarLanaPorId(preview, {
+                inventarioId: solicitud.inventarioId,
+                gramosUsados: solicitud.pedido,
+            });
+        } else if (solicitud.tipo === "relleno") {
+            resultado = descontarRellenoPorId(preview, {
+                inventarioId: solicitud.inventarioId,
+                gramosUsados: solicitud.pedido,
+            });
+        } else {
+            const { detalle } = descontarComponentes(preview, [
+                {
+                    inventarioId: solicitud.inventarioId,
+                    cantidadUtilizada: solicitud.pedido,
+                },
+            ]);
+            resultado = detalle[0] || { encontrado: false, descontado: 0, disponible: 0 };
+        }
+
+        solicitud.encontrado = !!resultado.encontrado;
+        solicitud.disponible = Number(resultado.disponible) || 0;
+        solicitud.descontado = Number(resultado.descontado) || 0;
+    });
+
+    const conDescuento = solicitudes.filter((s) => s.descontado > 0);
+    const faltantes = solicitudes
+        .filter((s) => !s.encontrado || s.descontado < s.pedido)
+        .map((s) => {
+            if (!s.encontrado) return `${s.etiqueta}: ya no está en el inventario`;
+            const falta = Number((s.pedido - s.descontado).toFixed(3));
+            return `${s.etiqueta}: faltaron ${formatearCantidadUnidad(falta, s.unidad)} (había ${formatearCantidadUnidad(s.disponible, s.unidad)})`;
+        });
+
+    if (!conDescuento.length) {
+        if (aviso) {
+            let mensaje = "ℹ️ No se descontó stock: no hay unidades disponibles de los materiales elegidos.";
+            if (faltantes.length) mensaje += " " + faltantes.join(" · ");
+            aviso.textContent = mensaje;
+        }
+        return;
+    }
+
+    const lineas = conDescuento.map((s) => {
+        const base = `• ${s.etiqueta}: ${formatearCantidadUnidad(s.descontado, s.unidad)}`;
+        if (s.descontado < s.pedido) {
+            return `${base} de ${formatearCantidadUnidad(s.pedido, s.unidad)} pedidos (había ${formatearCantidadUnidad(s.disponible, s.unidad)})`;
+        }
+        return base;
+    });
+
+    // Los faltantes parciales ya se ven en cada línea; en la confirmación sólo
+    // repetimos los materiales que desaparecieron del inventario.
+    const noEncontrados = solicitudes
+        .filter((s) => !s.encontrado)
+        .map((s) => `${s.etiqueta}: ya no está en el inventario`);
+    const mensajeConfirmacion =
+        "¿Descontar del inventario?\n\n" +
+        lineas.join("\n") +
+        (noEncontrados.length ? "\n\n⚠️ " + noEncontrados.join("\n⚠️ ") : "");
+
+    const confirmado = await confirmar(mensajeConfirmacion, {
+        titulo: "Confirmar descuento",
+        ok: "Sí, descontar",
+    });
+    if (!confirmado) {
         if (aviso) aviso.textContent = "ℹ️ No se descontó stock (cancelado).";
         return;
     }
@@ -567,24 +884,13 @@ async function aplicarDescuentoInventario() {
     estado.inventario = preview;
     const guardado = guardarInventario(estado.inventario);
     renderInventario();
+
     if (aviso) {
         let mensaje = guardado
-            ? "✔️ Stock descontado del inventario → " + detalle.map((d) => d.replace("• ", "")).join(" · ")
+            ? "✔️ Stock descontado → " + lineas.map((linea) => linea.replace("• ", "")).join(" · ")
             : "⚠️ Stock descontado, pero no se pudo guardar en el dispositivo. Exportá un backup.";
-
-        // Avisamos lo que no alcanzó en el stock.
-        const faltantes = [];
-        const difLana = Number((num("gramosUsados") - gramosLana).toFixed(3));
-        const difRelleno = Number((num("rellenoUsado") - gramosRelleno).toFixed(3));
-        const pedidos = estado.componentes.reduce((suma, c) => suma + (c.cantidadUtilizada || 0), 0);
-        const difComp = pedidos - componentesDescontados;
-
-        if (difLana > 0.001) faltantes.push(`Lana: faltaban ${difLana} g`);
-        if (difRelleno > 0.001) faltantes.push(`Relleno: faltaban ${difRelleno} g`);
-        if (difComp > 0) faltantes.push(`Componentes: faltaban ${difComp} ud.`);
-
-        if (faltantes.length) mensaje += " · ⚠️ Stock insuficiente → " + faltantes.join(", ");
-
+        if (faltantes.length) mensaje += " · ⚠️ " + faltantes.join(" · ");
+        if (sinVincular.length) mensaje += " · ℹ️ Los materiales sin vincular no descontaron stock.";
         aviso.textContent = mensaje;
     }
     firmaDescontada = firma;
@@ -612,10 +918,12 @@ if (btnGuardarDesdeCalculadora) {
         }
 
         const { costo, materialesUsados } = calcularCostoActual();
+        const entradas = capturarEntradas();
 
         if (seleccionado) {
             seleccionado.costo = costo;
             seleccionado.materialesUsados = materialesUsados;
+            seleccionado.entradas = entradas;
             seleccionado.estado = "terminado";
             seleccionado.fechaModificacion = new Date().toISOString();
             guardarProyectos(estado.proyectos);
@@ -626,6 +934,7 @@ if (btnGuardarDesdeCalculadora) {
             const nuevo = crearProyecto(nombre, "amigurumi", "");
             nuevo.costo = costo;
             nuevo.materialesUsados = materialesUsados;
+            nuevo.entradas = entradas;
             nuevo.estado = "terminado";
             estado.proyectos.unshift(nuevo);
             guardarProyectos(estado.proyectos);

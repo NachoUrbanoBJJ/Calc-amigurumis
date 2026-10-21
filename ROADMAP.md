@@ -39,12 +39,15 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ **Gestor de patrones de amigurumi** (código `PAT-000x`, materiales estructurados, búsqueda, chips por categoría)
 - ✅ **Inventario de materiales (lanas, relleno, componentes)**
 - ✅ **Planificador de trabajos (proyecto + secciones: puntos/vueltas/altura/notas)**
-- ✅ **Descontar stock al calcular (con confirmación)**
+- ✅ **Materiales del inventario por ID** en la calculadora (lana, relleno y componentes)
+- ✅ **Descontar stock al calcular (con confirmación)**: se descuenta sólo lo vinculado por ID; cancelar no modifica nada y los materiales manuales no tocan stock
+- ✅ **Snapshot de entradas del proyecto**: al reabrir un proyecto se restauran lana, relleno, componentes, horas y precios (los proyectos viejos usan `materialesUsados`)
+- ✅ **Unidades de patrones normalizadas** (`g`, `kg`, `ud`, `m`, `cm`, `ml`) y disponibilidad separada por magnitud
 - ✅ **Alertas de stock bajo / sin stock** (badge en cada material + resumen del inventario)
 - ✅ **Editar y eliminar materiales del inventario**
 - ✅ **Editar y eliminar componentes de la calculadora**
 - ✅ **Menú de navegación (Calculadora / Inventario / Planificador / Patrones / Backup)**
-- ✅ **Exportar/Importar Backup JSON (global)**
+- ✅ **Exportar/Importar Backup JSON v4** (incluye configuración)
 - ✅ **Exportar/Importar Inventario JSON**
 - ✅ **Crear proyecto a partir de un patrón**
 - ✅ **Exportar proyectos y patrones a PDF, CSV (Excel) y PNG**
@@ -53,9 +56,10 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 
 - ✅ Guardar en el dispositivo (localStorage)
 - ✅ Datos por defecto (config: último valor por hora)
-- ✅ Exportar/Importar backup (JSON)
+- ✅ Exportar/Importar backup **v4** (JSON + configuración)
 - ✅ **Base de datos local unificada (proyectos + inventario + patrones)**
-- ✅ **Sincronización de stock entre proyectos e inventario**
+- ✅ **Stock por ID entre calculadora, proyectos e inventario**
+- ✅ **Snapshots de entradas** para reabrir proyectos guardados
 - ⬜ Futuro: sincronización en la nube
 
 ## Bloque 4 — Diseño y experiencia (UI/UX) ✅
@@ -99,13 +103,13 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ Aviso global no bloqueante (`#avisoGlobal`) + manejador de errores temprano y
   `unhandledrejection` (una excepción ya no deja la pantalla congelada en silencio)
 - ✅ Ayudantes de DOM a prueba de fallos (`num`/`texto`/`valor` devuelven `""` en vez de lanzar)
-- ✅ **Sin doble descuento de stock**: apretar _Calcular_ dos veces no descuenta de nuevo
-- ✅ **Coincidencia unificada** (tolerante) entre disponibilidad de patrones y descuento de lana/relleno
-- ✅ Import de backup arreglado: las listas vacías **sí** borran datos; se resetean los formularios
+- ✅ **Sin doble descuento de stock** dentro del mismo cálculo: apretar _Calcular_ dos veces no descuenta de nuevo
+- ✅ **Descuento por ID** (sin adivinar por texto) y vista previa sobre una copia: cancelar no muta el inventario
+- ✅ **Import de backup v4** con configuración; las listas vacías **sí** borran datos y se resetean los formularios
 - ✅ Validación/descarte de datos corruptos (`esObjeto`, `normalizarInventario`)
 - ✅ Comparación de números con tolerancia (detección de duplicados con decimales)
 - ✅ Fechas inválidas muestran `-` en vez de "Invalid Date"
-- ✅ Tests ampliados (51 en total)
+- ✅ Tests ampliados (**57 en total**)
 
 ## Bloque U — UX y funcionalidad (modales + CRUD) ✅
 
@@ -117,9 +121,9 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ **Componentes de la calculadora editables**: editar (carga el formulario y guarda en la
   misma fila) y eliminar con confirmación
 - ✅ **Avisos de stock**: badges `Sin stock` / `Stock bajo` y resumen arriba del inventario
-- ✅ **Descuento de stock transparente**: si no alcanza, avisa cuánto faltó
+- ✅ **Descuento de stock transparente**: muestra el material y la cantidad exacta, avisa si falta stock y no descuenta si cancelás
 - ✅ Botones de cancelar edición y nombres de acción coherentes en todos los formularios
-- ✅ Tests ampliados (**51 en total**: incluye exportaciones CSV, duplicado e importes ideales)
+- ✅ Tests ampliados (**57 en total**: unidades, stock por ID, snapshots, exportaciones CSV, duplicado e importes ideales)
 
 ## Bloque 2b — Categorías editables ✅
 
@@ -131,26 +135,24 @@ Leyenda: ✅ hecho · ⬜ pendiente · 🔄 en progreso
 - ✅ Borrar una categoría **no** modifica los materiales que ya la usan.
 - ✅ Las categorías entran en el backup completo (export/import; compatible con backups viejos).
 
-## Bloque S — Escalado por tamaño ✅
+## Bloque I — Inventario preciso y proyectos reabribles ✅
 
-Cálculo por medida para amigurumis (y piezas tejidas del mismo modelo): cargás un
-**modelo base** (tamaño, gramos de lana, gramos de relleno y horas) y el **tamaño
-deseado**, y la app estima cuánto material y tiempo lleva.
-
-- ✅ Fórmulas puras en `calculos.js`: `factorEscala()` y `escalarPorTamano()`
-- ✅ La lana crece con la **superficie** (~altura²), el relleno con el **volumen**
-  (~altura²·³, un poco más que la lana) y las horas con la **cantidad de puntos y
-  vueltas** (~altura^1,7)
-- ✅ Panel plegable cozy ("Escalar por tamaño") en la calculadora, con los factores aplicados
-  a la vista (×1,93 lana · ×2,13 relleno · ×1,75 horas)
-- ✅ Botón **"Usar estos valores"** que vuelca lana, relleno y horas al formulario para
-  recalcular el precio real
-- ✅ Validaciones (tamaños > 0) y aviso si faltan datos
-- ✅ **7 tests nuevos** (total 58) y cálculos verificados en el navegador
-
-**A tener en cuenta:** en piezas grandes el precio ideal (+50 %) puede superar el techo de
-mercado actual (~$45.900). Un osito de 25 cm da un ideal de ~$68.000, que es más de lo que
-hoy paga el mercado: conviene usarlo como piso de costo, no como precio final ciego.
+- ✅ **Selección de materiales por ID** desde la calculadora (lana, relleno y componentes), con
+  autocompletado de precio/gramaje y aviso de stock disponible.
+- ✅ **Descuento confirmado**: la app muestra el material y la cantidad exacta; trabaja sobre una
+  copia y sólo reemplaza el inventario si el usuario confirma. Cancelar no muta nada.
+- ✅ **Materiales manuales sin descuento**: si no están vinculados por ID, se calculan pero no
+  tocan stock. Si falta stock, se descuenta lo disponible y se informa cuánto faltó.
+- ✅ **Snapshot de entradas** al guardar un proyecto: se restauran lana, relleno, componentes,
+  horas, margen, precio manual y vínculos al inventario. Los proyectos viejos usan
+  `materialesUsados` como fallback y avisan que faltan precios/gramajes.
+- ✅ **Unidades de patrones** normalizadas a `g`, `kg`, `ud`, `m`, `cm` y `ml`; la disponibilidad
+  compara peso con lanas/rellenos, unidades con componentes y marca longitudes/volúmenes como
+  “no verificable”.
+- ✅ **Backup v4** con configuración (tema, valor por hora, última sección); al importar se
+  reaplica el tema.
+- ✅ **57/57 tests** unitarios y verificación funcional en navegador (snapshot, cancelar/confirmar,
+  stock parcial, proyecto viejo, unidades y round-trip de backup).
 
 ## Bloque QA — Auditoría funcional + viabilidad de mercado ✅
 
@@ -165,26 +167,25 @@ números contra precios reales de mercado en Argentina (octubre 2026).
 - ✅ Mano de obra opcional: sin valor hora avisa y **no** bloquea el cálculo
 - ✅ Guardado de proyectos y **persistencia tras recargar** (costo, precio ideal y materiales intactos)
 - ✅ Inventario: alta de lanas, rellenos y componentes (con categorías)
-- ✅ **Descuento de stock con confirmación** y aviso preciso ("descontado X · faltaba Y")
+- ✅ **Descuento de stock con confirmación por ID** y aviso preciso ("descontado X · faltaba Y")
 - ✅ **Sin doble descuento** al apretar _Calcular_ dos veces
+- ✅ **Reapertura de proyecto** con snapshot de entradas y fallback para proyectos viejos
+- ✅ **Unidades de patrón** separadas por magnitud y backup v4 con configuración
 - ✅ Patrones: crear, código `PAT-NNNN`, "Crear proyecto desde patrón", duplicar
 - ✅ Exportación CSV (BOM + `;` + coma decimal, abre en Excel es-AR) e impresión PDF
 - ✅ Backup round-trip: export → borrar todo → import → **restaura proyectos, inventario,
   patrones y categorías**
 - ✅ Validaciones: división por cero, negativos y "sin datos" con mensajes claros
-- ✅ **51/51 tests** unitarios, `lint`, `format:check` y `build` OK
+- ✅ **57/57 tests** unitarios, `lint`, `format:check` y `build` OK
 
 **Hallazgos / pendientes detectados:**
 
-- ⬜ El backup es **v3** y **no incluye la config** (tema y valor hora por defecto) → futuro **v4**
+- ✅ Backup **v4** con configuración verificado (export → import → tema y valor hora restaurados).
 - ℹ️ `canvas.toBlob` no dispara el callback en el navegador headless de automatización
   (limitación del entorno, no de la app); en navegador real el PNG exporta bien y hay
-  fallback a `toDataURL`
-- ℹ️ Los datos del formulario de la calculadora **no persisten al recargar** (por diseño:
-  se guardan como proyecto). Evaluar si conviene un borrador automático.
-- ℹ️ La coincidencia de material para descontar stock es **estricta por texto**: si escribís
-  "rosa" y en el inventario dice "Rosa palo" puede no coincidir. Ya hay tolerancia parcial;
-  se podría mejorar con desplegable de materiales disponibles.
+  fallback a `toDataURL`.
+- ℹ️ El borrador **no guardado** de la calculadora no persiste al recargar (por diseño). Los
+  proyectos guardados sí reabren su snapshot; evaluar un borrador automático más adelante.
 
 **Viabilidad de mercado (ARS, octubre 2026):**
 
@@ -239,7 +240,7 @@ solo se sostiene con piezas grandes, personalizadas o de marca.
 Bloque 0 → Bloque 1 → Bloque 4 (responsive/UI + modo oscuro) → Bloque 3 → Bloque 5 (PWA) →
 Bloque C (prolijidad) → Bloque R (robustez) → Bloque U (UX + CRUD) →
 Bloque 2 completo (features + exportaciones) → Bloque QA (auditoría + mercado) →
-Bloque S (escalado por tamaño) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
+Bloque I (inventario por ID + snapshots) → Bloque 6 (Capacitor) → Bloque 7 (tienda)
 ```
 
 Primero que funcione (0–1), después que se vea bien (4), que no pierda datos (3),
