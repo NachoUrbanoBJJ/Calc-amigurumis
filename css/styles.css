@@ -59,6 +59,9 @@
     --superficie: #fffaf1;
     --superficie-2: #f8efe0;
     --superficie-3: #f1e3cf;
+    /* Fondo de los campos: apenas hundido respecto de la tarjeta, para que el
+       control se lea como una casilla y no quede solo la línea del borde. */
+    --campo: #fdf3e3;
     --texto: #33261d;
     --texto-suave: #5f4a38;
     --texto-tenue: #7c6349;
@@ -126,6 +129,7 @@ html[data-tema="oscuro"] {
     --superficie: #241a16;
     --superficie-2: #2e211c;
     --superficie-3: #3a2a22;
+    --campo: #2b1f1a;
     --texto: #f6e9db;
     --texto-suave: #d5bda6;
     --texto-tenue: #b6977e;
@@ -170,6 +174,7 @@ html[data-tema="oscuro"] {
         --superficie: #241a16;
         --superficie-2: #2e211c;
         --superficie-3: #3a2a22;
+        --campo: #2b1f1a;
         --texto: #f6e9db;
         --texto-suave: #d5bda6;
         --texto-tenue: #b6977e;
@@ -374,7 +379,7 @@ textarea {
     border: none;
     border-bottom: 2px solid var(--borde-fuerte);
     border-radius: var(--radio-s) var(--radio-s) 3px 3px;
-    background-color: var(--superficie);
+    background-color: var(--campo);
     color: var(--texto);
     font-family: inherit;
     font-size: 1rem;
@@ -417,7 +422,7 @@ textarea:disabled {
 
 label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.65rem;
     color: var(--texto-suave);
     font-size: 0.86rem;
     font-weight: 700;
@@ -438,7 +443,7 @@ label {
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    row-gap: var(--esp-5);
+    row-gap: 1.75rem;
     column-gap: var(--esp-3);
 }
 
